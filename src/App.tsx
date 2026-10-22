@@ -1,5 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState } from "react";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { useLayoutEffect, useRef, useState } from "react";
 import Sidebar from "./components/layout/Sidebar";
 import Header from "./components/layout/Header";
 import Landing from "./pages/Landing";
@@ -36,13 +36,21 @@ import CariMateri from "./pages/CariMateri";
 
 function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { pathname } = useLocation();
+  const mainRef = useRef<HTMLElement>(null);
+
+  useLayoutEffect(() => {
+    mainRef.current?.scrollTo({ top: 0, left: 0 });
+    window.scrollTo({ top: 0, left: 0 });
+    setSidebarOpen(false);
+  }, [pathname]);
 
   return (
     <div className="flex min-h-dvh flex-col bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100 md:h-dvh md:flex-row md:overflow-hidden">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <Header onMenuClick={() => setSidebarOpen((open) => !open)} />
-        <main className="w-full min-w-0 flex-1 p-4 sm:p-6 md:overflow-auto">{children}</main>
+        <main ref={mainRef} className="min-h-0 w-full min-w-0 flex-1 p-4 sm:p-6 md:overflow-auto">{children}</main>
       </div>
     </div>
   );
