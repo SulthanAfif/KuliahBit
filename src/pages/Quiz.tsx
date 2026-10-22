@@ -78,7 +78,7 @@ export default function Quiz() {
   if (quizMode && showResult && current) {
     const pct = Math.round((score / current.questions.length) * 100);
     return (
-      <div className="max-w-md mx-auto text-center space-y-6 py-10">
+      <div className="w-full text-center space-y-6 py-10">
         <h1 className="text-3xl font-bold">Hasil Kuis</h1>
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-8">
           <p className="text-5xl font-bold text-blue-600">{pct}%</p>
@@ -110,7 +110,7 @@ export default function Quiz() {
   if (quizMode && current) {
     const q = current.questions[idx];
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         <div className="flex justify-between text-sm text-gray-500">
           <button onClick={() => setQuizMode(false)} className="flex items-center gap-1 hover:text-gray-800">
             <ArrowLeft size={16} /> Keluar
@@ -172,7 +172,7 @@ export default function Quiz() {
 
   if (!selectedId) {
     return (
-      <div className="space-y-6 max-w-5xl">
+      <div className="w-full space-y-6">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold">Quiz</h1>
@@ -222,7 +222,7 @@ export default function Quiz() {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="w-full space-y-6">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3">
           <button onClick={() => setSelectedId(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"><ArrowLeft size={20} /></button>

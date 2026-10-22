@@ -83,7 +83,7 @@ export default function BankSoal() {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="w-full space-y-6">
       {!isPro && items.length >= FREE_LIMITS.bankItems && (
         <UpgradeCard title="Batas bank Free" description={`Maksimal ${FREE_LIMITS.bankItems} soal/materi di paket Free.`} />
       )}

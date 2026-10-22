@@ -38,7 +38,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="max-w-lg space-y-6">
+    <div className="w-full space-y-6">
       <h1 className="text-2xl font-bold">Pengaturan</h1>
 
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl divide-y divide-gray-200 dark:divide-gray-800">

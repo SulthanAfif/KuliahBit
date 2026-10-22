@@ -222,7 +222,7 @@ export default function Converter() {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="w-full space-y-6">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <FileOutput className="text-violet-500" size={26} />

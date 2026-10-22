@@ -88,7 +88,7 @@ export default function Flashcards() {
   if (studyMode && selected && selected.cards.length > 0) {
     const card = selected.cards[cardIndex];
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         <div className="flex justify-between items-center">
           <button
             onClick={() => setStudyMode(false)}
@@ -142,7 +142,7 @@ export default function Flashcards() {
   // List sets
   if (!selectedId) {
     return (
-      <div className="space-y-6 max-w-5xl">
+      <div className="w-full space-y-6">
         <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
           <div>
             <h1 className="text-2xl font-bold">Flashcards</h1>
@@ -220,7 +220,7 @@ export default function Flashcards() {
 
   // Detail set
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="w-full space-y-6">
       <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3">
           <button onClick={() => setSelectedId(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">

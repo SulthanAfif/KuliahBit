@@ -112,7 +112,7 @@ export default function Agenda() {
   const nextCd = nextUrgent ? getCountdown(nextUrgent.date, nextUrgent.time) : null;
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="w-full space-y-6">
       <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">

@@ -50,7 +50,7 @@ export default function Skripsi() {
   const pct = progress.length ? Math.round((doneCount / progress.length) * 100) : 0;
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="w-full space-y-6">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <BookOpen className="text-orange-500" /> Tracker Skripsi

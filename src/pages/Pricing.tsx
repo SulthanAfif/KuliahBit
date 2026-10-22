@@ -32,7 +32,7 @@ export default function Pricing() {
   const { isPro, activatePro, deactivatePro } = usePlan();
 
   return (
-    <div className="space-y-8 max-w-4xl">
+    <div className="w-full space-y-8">
       <div className="text-center">
         <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
           <Crown className="text-amber-500" size={28} />

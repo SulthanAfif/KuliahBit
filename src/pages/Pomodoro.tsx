@@ -134,7 +134,7 @@ export default function Pomodoro() {
   };
 
   return (
-    <div className="space-y-8 max-w-md mx-auto">
+    <div className="w-full space-y-8">
       <div className="text-center">
         <h1 className="text-2xl font-bold flex items-center justify-center gap-2">
           <BookOpen className="text-red-500" size={26} />

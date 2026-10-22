@@ -43,7 +43,7 @@ export default function Makalah() {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="w-full space-y-6">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <FileText className="text-sky-500" size={26} />

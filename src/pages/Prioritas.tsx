@@ -32,7 +32,7 @@ export default function Prioritas() {
   const tonight = ranked.slice(0, 5);
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="w-full space-y-6">
       <div>
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <ListOrdered className="text-amber-500" size={26} />
