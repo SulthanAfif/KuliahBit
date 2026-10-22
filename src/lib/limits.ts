@@ -1,0 +1,74 @@
+import { getFromStorage, saveToStorage } from "./storage";
+
+/** Batas paket Free — Pro = unlimited */
+export const FREE_LIMITS = {
+  aiPerDay: 3,
+  flashcardSets: 3,
+  flashcardCardsTotal: 3,
+  quizSets: 3,
+  bankItems: 3,
+  notes: 3,
+  pdfMaxMb: 5,
+  pdfMaxChars: 15000,
+} as const;
+
+const AI_USAGE_KEY = "ai-usage-today";
+
+export function getAiUsageToday(): number {
+  const today = new Date().toISOString().slice(0, 10);
+  const usage = getFromStorage<{ date: string; count: number }>(AI_USAGE_KEY, {
+    date: today,
+    count: 0,
+  });
+  return usage.date === today ? usage.count : 0;
+}
+
+export function incrementAiUsage(): void {
+  const today = new Date().toISOString().slice(0, 10);
+  const current = getAiUsageToday();
+  saveToStorage(AI_USAGE_KEY, { date: today, count: current + 1 });
+}
+
+/** true jika masih boleh pakai AI (Pro atau sisa kuota free) */
+export function canUseAi(isPro: boolean): boolean {
+  if (isPro) return true;
+  return getAiUsageToday() < FREE_LIMITS.aiPerDay;
+}
+
+export function aiRemaining(isPro: boolean): number | "unlimited" {
+  if (isPro) return "unlimited";
+  return Math.max(0, FREE_LIMITS.aiPerDay - getAiUsageToday());
+}
+
+export function canAddBankItem(isPro: boolean, currentCount: number): boolean {
+  if (isPro) return true;
+  return currentCount < FREE_LIMITS.bankItems;
+}
+
+export function canAddFlashcardSet(isPro: boolean, setCount: number): boolean {
+  if (isPro) return true;
+  return setCount < FREE_LIMITS.flashcardSets;
+}
+
+export function canAddNote(isPro: boolean, count: number): boolean {
+  if (isPro) return true;
+  return count < FREE_LIMITS.notes;
+}
+
+export function canAddQuizSet(isPro: boolean, count: number): boolean {
+  if (isPro) return true;
+  return count < FREE_LIMITS.quizSets;
+}
+
+/** Cek ukuran file PDF untuk free */
+export function canUploadPdf(isPro: boolean, fileSizeBytes: number): boolean {
+  if (isPro) return true;
+  return fileSizeBytes <= FREE_LIMITS.pdfMaxMb * 1024 * 1024;
+}
+
+export function clipPdfText(isPro: boolean, text: string): { text: string; clipped: boolean } {
+  if (isPro || text.length <= FREE_LIMITS.pdfMaxChars) {
+    return { text, clipped: false };
+  }
+  return { text: text.slice(0, FREE_LIMITS.pdfMaxChars), clipped: true };
+}
