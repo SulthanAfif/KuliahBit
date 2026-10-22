@@ -80,7 +80,7 @@ export default function Dashboard() {
 
 
   return (
-    <div className="space-y-8 max-w-6xl">
+    <div className="w-full space-y-8">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
@@ -116,7 +116,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
         {menus.map((m) => {
           const Icon = m.icon;
           return (
