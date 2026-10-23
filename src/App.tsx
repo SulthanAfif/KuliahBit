@@ -14,7 +14,6 @@ import Pricing from "./pages/Pricing";
 import Settings from "./pages/Settings";
 import IPK from "./pages/IPK";
 import Jadwal from "./pages/Jadwal";
-import Pomodoro from "./pages/Pomodoro";
 import Citation from "./pages/Citation";
 import Agenda from "./pages/Agenda";
 import Habit from "./pages/Habit";
@@ -76,7 +75,6 @@ function App() {
         <Route path="/quiz" element={<AppShell><Quiz /></AppShell>} />
         <Route path="/ringkas" element={<AppShell><Ringkas /></AppShell>} />
         <Route path="/ipk" element={<AppShell><IPK /></AppShell>} />
-        <Route path="/pomodoro" element={<AppShell><Pomodoro /></AppShell>} />
         <Route path="/habit" element={<AppShell><Habit /></AppShell>} />
         <Route path="/absensi" element={<AppShell><Absensi /></AppShell>} />
         <Route path="/makalah" element={<AppShell><Makalah /></AppShell>} />

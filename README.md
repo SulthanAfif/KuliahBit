@@ -30,7 +30,7 @@ KuliahBit adalah aplikasi web untuk membantu mahasiswa Indonesia mengatur kegiat
 ### Perkuliahan dan produktivitas
 
 - Dashboard, tugas dan deadline, jadwal, agenda, serta prioritas tugas.
-- Pelacak kebiasaan, absensi, dan Pomodoro.
+- Pelacak kebiasaan dan absensi.
 - Kalkulator IPK, nilai akhir, dan nilai minimal.
 - Bantuan format tugas, pembuat makalah, surat kilat, serta konverter dokumen.
 - CV builder.

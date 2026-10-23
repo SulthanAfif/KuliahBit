@@ -63,14 +63,12 @@ function calcLongest(dates: string[]): number {
 }
 
 export default function Habit() {
-  const [habits, setHabits] = useState<Habit[]>([]);
+  const [habits, setHabits] = useState<Habit[]>(() =>
+    getFromStorage<Habit[]>("habits", [])
+  );
   const [name, setName] = useState("");
   const [color, setColor] = useState(COLORS[0]);
   const [showForm, setShowForm] = useState(false);
-
-  useEffect(() => {
-    setHabits(getFromStorage("habits", []));
-  }, []);
 
   useEffect(() => {
     saveToStorage("habits", habits);
@@ -124,7 +122,7 @@ export default function Habit() {
 
   const handleDelete = (id: string) => {
     if (confirm("Hapus kebiasaan ini?")) {
-      setHabits(habits.filter((h) => h.id !== id));
+      setHabits((current) => current.filter((h) => h.id !== id));
     }
   };
 
@@ -234,7 +232,9 @@ export default function Habit() {
                     </div>
                   </div>
                   <button
+                    type="button"
                     onClick={() => handleDelete(h.id)}
+                    aria-label={`Hapus kebiasaan ${h.name}`}
                     className="text-gray-400 hover:text-red-500 shrink-0"
                   >
                     <Trash2 size={16} />

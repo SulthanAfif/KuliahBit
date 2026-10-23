@@ -12,14 +12,20 @@ interface CourseAttendance {
 }
 
 export default function Absensi() {
-  const [courses, setCourses] = useState<CourseAttendance[]>([]);
+  const [courses, setCourses] = useState<CourseAttendance[]>(() =>
+    getFromStorage<CourseAttendance[]>("attendance", []).map((course) => {
+      const totalMeetings = Math.max(1, course.totalMeetings || 1);
+      const attended = Math.min(totalMeetings, Math.max(0, course.attended || 0));
+      const sick = Math.min(
+        totalMeetings - attended,
+        Math.max(0, course.sick || 0)
+      );
+      return { ...course, totalMeetings, attended, sick };
+    })
+  );
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [total, setTotal] = useState(14);
-
-  useEffect(() => {
-    setCourses(getFromStorage("attendance", []));
-  }, []);
 
   useEffect(() => {
     saveToStorage("attendance", courses);
@@ -44,11 +50,20 @@ export default function Absensi() {
 
   const update = (id: string, field: "attended" | "sick" | "totalMeetings", delta: number) => {
     setCourses(
-      courses.map((c) => {
+      (current) => current.map((c) => {
         if (c.id !== id) return c;
-        const next = { ...c, [field]: Math.max(0, c[field] + delta) };
-        if (field === "attended") next.attended = Math.min(next.attended, next.totalMeetings);
-        if (field === "sick") next.sick = Math.min(next.sick, next.totalMeetings);
+        const next = { ...c };
+        if (field === "totalMeetings") {
+          next.totalMeetings = Math.max(1, c.totalMeetings + delta);
+          next.attended = Math.min(next.attended, next.totalMeetings);
+          next.sick = Math.min(next.sick, next.totalMeetings - next.attended);
+        } else {
+          const otherCount = field === "attended" ? c.sick : c.attended;
+          next[field] = Math.min(
+            Math.max(0, c[field] + delta),
+            Math.max(0, c.totalMeetings - otherCount)
+          );
+        }
         return next;
       })
     );
@@ -63,7 +78,7 @@ export default function Absensi() {
   const stats = useMemo(() => {
     return courses.map((c) => {
       const present = c.attended + c.sick; // sakit sering dihitung hadir
-      const pct = c.totalMeetings > 0 ? (present / c.totalMeetings) * 100 : 0;
+      const pct = c.totalMeetings > 0 ? Math.min(100, (present / c.totalMeetings) * 100) : 0;
       // Berapa kali boleh absen agar tetap >= 75%
       const minRequired = Math.ceil(c.totalMeetings * 0.75);
       // Better: meetings done = attended + sick + absent_so_far; we only track attended+sick

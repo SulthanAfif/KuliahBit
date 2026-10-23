@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, ArrowUpRight, AlarmClock, BookMarked, Calendar, Calculator, CheckSquare, CircleCheck, Clock3, GraduationCap, Instagram, Layers, Mail, Shield, Smartphone, Sparkles, Timer, Zap } from "lucide-react";
+import { ArrowRight, ArrowUpRight, AlarmClock, BookMarked, Calendar, Calculator, CheckSquare, CircleCheck, Clock3, GraduationCap, Instagram, Layers, Mail, Shield, Smartphone, Sparkles, Zap } from "lucide-react";
 
 const features = [
   { icon: CheckSquare, title: "Prioritas malam ini", desc: "Urutkan tugas berdasarkan tenggat dan urgensi saat semuanya terasa mendesak." },
@@ -7,7 +7,6 @@ const features = [
   { icon: Calculator, title: "Nilai minimum UAS", desc: "Hitung nilai UAS yang perlu dicapai berdasarkan nilai dan bobot yang sudah ada." },
   { icon: Sparkles, title: "Ringkasan materi", desc: "Ambil inti bacaan panjang, lalu ubah jadi bahan belajar yang lebih ringkas." },
   { icon: Layers, title: "Flashcard & kuis", desc: "Uji ingatan dengan kartu belajar dan latihan soal dari materi kuliah." },
-  { icon: Timer, title: "Pomodoro fokus", desc: "Mulai sesi fokus singkat dan jaga ritme belajar tanpa terdistraksi." },
   { icon: BookMarked, title: "Helper tugas", desc: "Bantu susun outline, format makalah, sitasi, dan bahan presentasi." },
   { icon: Calendar, title: "Agenda & countdown", desc: "Lihat jadwal kelas, ujian, dan deadline penting yang makin dekat." },
 ];
@@ -53,7 +52,6 @@ export default function Landing() {
             <div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-bold">Yang perlu dibereskan</h3><span className="text-xs text-blue-600">3 prioritas</span></div>
             <div className="space-y-2.5">{[["Kumpulkan revisi makalah","Besok · 23.59","bg-amber-400"],["Ulang materi untuk kuis","Jumat · 10.00","bg-blue-500"],["Cek target nilai UAS","Senin · 08.00","bg-violet-500"]].map(([title,meta,dot],i)=><div key={title} className="flex items-center gap-3 rounded-xl border border-gray-100 p-3 dark:border-gray-800"><CircleCheck size={17} className={i===0?"text-amber-500":"text-gray-300"}/><span className={`h-8 w-1.5 rounded-full ${dot}`}/><div className="min-w-0 flex-1"><p className="truncate text-xs font-semibold sm:text-sm">{title}</p><p className="mt-0.5 flex items-center gap-1 text-[10px] text-gray-500 sm:text-xs"><Clock3 size={11}/>{meta}</p></div><ArrowRight size={15} className="text-gray-300"/></div>)}</div>
             <div className="mt-3 flex items-center gap-2 rounded-xl border border-green-100 bg-green-50/70 px-3 py-2 text-xs font-medium text-gray-700 dark:border-green-900/60 dark:bg-green-950/30 dark:text-gray-200"><CircleCheck size={15} className="shrink-0 text-green-600"/>Tugas tetap terpantau</div>
-            <div className="mt-3 flex items-center justify-between rounded-xl bg-blue-600 p-4 text-white"><div><p className="text-xs text-blue-100">Mulai fokus sekarang</p><p className="mt-0.5 text-lg font-bold">25:00 <span className="text-xs font-normal text-blue-100">menit</span></p></div><div className="grid h-10 w-10 place-items-center rounded-full border-2 border-white/50"><ArrowRight size={17}/></div></div>
           </div>
         </div>
       </div>
