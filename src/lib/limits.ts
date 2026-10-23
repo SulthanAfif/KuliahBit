@@ -2,7 +2,7 @@ import { getFromStorage, saveToStorage } from "./storage";
 
 /** Batas paket Free — Pro = unlimited */
 export const FREE_LIMITS = {
-  aiPerDay: 3,
+  aiPerMonth: 5,
   flashcardSets: 3,
   flashcardCardsTotal: 3,
   quizSets: 3,
@@ -12,32 +12,37 @@ export const FREE_LIMITS = {
   pdfMaxChars: 15000,
 } as const;
 
-const AI_USAGE_KEY = "ai-usage-today";
+const AI_USAGE_KEY = "ai-usage-monthly";
 
-export function getAiUsageToday(): number {
-  const today = new Date().toISOString().slice(0, 10);
-  const usage = getFromStorage<{ date: string; count: number }>(AI_USAGE_KEY, {
-    date: today,
+function currentMonth(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+export function getAiUsageThisMonth(): number {
+  const month = currentMonth();
+  const usage = getFromStorage<{ month: string; count: number }>(AI_USAGE_KEY, {
+    month,
     count: 0,
   });
-  return usage.date === today ? usage.count : 0;
+  return usage.month === month ? usage.count : 0;
 }
 
 export function incrementAiUsage(): void {
-  const today = new Date().toISOString().slice(0, 10);
-  const current = getAiUsageToday();
-  saveToStorage(AI_USAGE_KEY, { date: today, count: current + 1 });
+  const month = currentMonth();
+  const current = getAiUsageThisMonth();
+  saveToStorage(AI_USAGE_KEY, { month, count: current + 1 });
 }
 
 /** true jika masih boleh pakai AI (Pro atau sisa kuota free) */
 export function canUseAi(isPro: boolean): boolean {
   if (isPro) return true;
-  return getAiUsageToday() < FREE_LIMITS.aiPerDay;
+  return getAiUsageThisMonth() < FREE_LIMITS.aiPerMonth;
 }
 
 export function aiRemaining(isPro: boolean): number | "unlimited" {
   if (isPro) return "unlimited";
-  return Math.max(0, FREE_LIMITS.aiPerDay - getAiUsageToday());
+  return Math.max(0, FREE_LIMITS.aiPerMonth - getAiUsageThisMonth());
 }
 
 export function canAddBankItem(isPro: boolean, currentCount: number): boolean {

@@ -12,7 +12,7 @@ import { usePlan } from "../context/PlanContext";
 import { Link, useNavigate } from "react-router-dom";
 import { getFromStorage, saveToStorage } from "../lib/storage";
 import { generateAI, hasAIKey, parseFlashcards, type AIMode } from "../lib/ai";
-import { FREE_LIMITS } from "../lib/limits";
+import { FREE_LIMITS, getAiUsageThisMonth, incrementAiUsage } from "../lib/limits";
 import { extractTextFromPDF } from "../lib/pdf";
 import type { FlashcardSet } from "../types";
 import { v4 as uuid } from "uuid";
@@ -40,15 +40,9 @@ export default function Ringkas() {
   const [pdfName, setPdfName] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const usageKey = "ai-usage-today";
-  const today = new Date().toISOString().slice(0, 10);
-  const usage = getFromStorage<{ date: string; count: number }>(usageKey, {
-    date: today,
-    count: 0,
-  });
-  const todayCount = usage.date === today ? usage.count : 0;
-  const freeLimit = FREE_LIMITS.aiPerDay;
-  const canUse = isPro || todayCount < freeLimit;
+  const aiUsage = getAiUsageThisMonth();
+  const freeLimit = FREE_LIMITS.aiPerMonth;
+  const canUse = isPro || aiUsage < freeLimit;
   const aiReady = hasAIKey();
 
   const handlePDF = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,9 +126,7 @@ export default function Ringkas() {
         }
       }
 
-      if (!isPro) {
-        saveToStorage(usageKey, { date: today, count: todayCount + 1 });
-      }
+      if (!isPro && aiReady) incrementAiUsage();
     } catch (e: any) {
       if (e.message === "NO_API_KEY") {
         setError("API key Groq belum diset. Lihat README untuk cara setup.");
@@ -174,7 +166,7 @@ export default function Ringkas() {
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
           {isPro
             ? "Unlimited generate"
-            : `Free: ${todayCount}/${freeLimit} kali hari ini`}
+            : `Free: ${aiUsage}/${freeLimit} kali bulan ini`}
           {" · "}
           {aiReady ? (
             <span className="text-green-600 dark:text-green-400">AI real (Groq) aktif</span>

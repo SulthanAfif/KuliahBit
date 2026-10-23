@@ -26,8 +26,8 @@ export default function Parafrase() {
     setResult("");
     try {
       if (aiReady) {
-        incrementAiUsage();
         setResult(await generateAI("parafrase", text));
+        if (!isPro) incrementAiUsage();
       } else {
         await new Promise((r) => setTimeout(r, 500));
         setResult(

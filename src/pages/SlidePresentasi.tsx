@@ -238,7 +238,7 @@ export default function SlidePresentasi() {
         <div className="mt-2"><AiQuotaBadge /></div>
       </div>
       {!isPro && !canUseAi(isPro) && (
-        <UpgradeCard title="Kuota AI hari ini habis" description={`Free ${FREE_LIMITS.aiPerDay}×/hari. Pro = unlimited generate.`} />
+        <UpgradeCard title="Kuota AI bulan ini habis" description={`Free ${FREE_LIMITS.aiPerMonth}×/bulan. Pro = unlimited generate.`} />
       )}
 
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 space-y-3 shadow-sm">

@@ -18,7 +18,7 @@ export function AiQuotaBadge({ className = "" }: { className?: string }) {
   const left = aiRemaining(false);
   return (
     <span className={`text-xs text-gray-500 ${className}`}>
-      Free · AI {left}/{FREE_LIMITS.aiPerDay} hari ini ·{" "}
+      Free · AI {left}/{FREE_LIMITS.aiPerMonth} bulan ini ·{" "}
       <Link to="/pricing" className="text-amber-600 hover:underline">
         Upgrade
       </Link>

@@ -8,7 +8,7 @@ export default function Settings() {
 
   const handleClearAll = () => {
     if (confirm("Hapus SEMUA data (tugas, flashcard, quiz, catatan, dll)? Tidak bisa dibatalkan.")) {
-      ["tasks", "courses", "flashcard-sets", "quiz-sets", "notes", "skripsi-progress", "skripsi-judul", "ai-usage-today", "ipk-items", "schedule-items", "citations", "agenda-items", "habits", "attendance", "cv-data", "bank-soal-materi", "pdf-search-cache"].forEach(
+      ["tasks", "courses", "flashcard-sets", "quiz-sets", "notes", "skripsi-progress", "skripsi-judul", "ai-usage-today", "ai-usage-monthly", "ipk-items", "schedule-items", "citations", "agenda-items", "habits", "attendance", "cv-data", "bank-soal-materi", "pdf-search-cache"].forEach(
         removeFromStorage
       );
       alert("Semua data dihapus. Refresh halaman.");

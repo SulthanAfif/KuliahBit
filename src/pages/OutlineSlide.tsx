@@ -26,8 +26,8 @@ export default function OutlineSlide() {
     setResult("");
     try {
       if (aiReady) {
-        incrementAiUsage();
         setResult(await generateAI("outline", text));
+        if (!isPro) incrementAiUsage();
       } else {
         await new Promise((r) => setTimeout(r, 600));
         setResult(

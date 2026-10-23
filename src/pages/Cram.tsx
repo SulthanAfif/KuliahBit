@@ -27,8 +27,8 @@ export default function Cram() {
     setResult("");
     try {
       if (aiReady) {
-        incrementAiUsage();
         setResult(await generateCram(text, minutes));
+        if (!isPro) incrementAiUsage();
       } else {
         await new Promise((r) => setTimeout(r, 800));
         const blocks = Math.max(3, Math.floor(minutes / 30));
@@ -60,10 +60,10 @@ export default function Cram() {
       </div>
 
       {!isPro && !canUseAi(isPro) && (
-        <UpgradeCard title="Kuota AI hari ini habis" description="Paket Free: 5 generate/hari. Pro = unlimited." />
+        <UpgradeCard title="Kuota AI bulan ini habis" description="Paket Free: 5 generate/bulan. Pro = unlimited." />
       )}
       {!isPro && canUseAi(isPro) && (
-        <p className="text-xs text-gray-500">Sisa AI free hari ini: {aiRemaining(isPro)}× · <Link to="/pricing" className="text-amber-600 hover:underline">Upgrade Pro</Link></p>
+        <p className="text-xs text-gray-500">Sisa AI free bulan ini: {aiRemaining(isPro)}× · <Link to="/pricing" className="text-amber-600 hover:underline">Upgrade Pro</Link></p>
       )}
       {!aiReady && (
         <div className="text-sm bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-3 text-blue-800 dark:text-blue-200">

@@ -7,7 +7,7 @@ const FREE_FEATURES = [
   { text: "IPK & kalkulator nilai akhir", ok: true },
   { text: `Flashcard max ${FREE_LIMITS.flashcardSets} set / ${FREE_LIMITS.flashcardCardsTotal} kartu`, ok: true },
   { text: `Quiz max ${FREE_LIMITS.quizSets} set`, ok: true },
-  { text: `AI (ringkas, cram, outline, dll) ${FREE_LIMITS.aiPerDay}×/hari`, ok: true },
+  { text: `AI (ringkas, cram, outline, dll) ${FREE_LIMITS.aiPerMonth}×/bulan`, ok: true },
   { text: `Bank soal/materi max ${FREE_LIMITS.bankItems} item`, ok: true },
   { text: `Catatan max ${FREE_LIMITS.notes}`, ok: true },
   { text: `PDF max ${FREE_LIMITS.pdfMaxMb} MB (teks terbatas)`, ok: true },
