@@ -105,9 +105,12 @@ function SlidePreview({ slide, index, total, template, layout, fontFamily, fontS
       ? "inset-x-[8%] top-[62%] bottom-[9%]"
       : "right-[5%] top-[20%] bottom-[17%] w-[34%]";
   const centerText = layout === "centered";
+  const previewFontSize = (size: number, minimum: number) => compact
+    ? `${size / 12}px`
+    : `clamp(${minimum}px, ${size / 12.8}cqw, ${size}px)`;
   if (slide.isCover) {
     return (
-      <div className="relative isolate flex aspect-video flex-col items-center justify-center overflow-hidden rounded-xl px-[10%] text-center" style={{ background: template.id === "modern" ? "linear-gradient(135deg, #edf2ff 0%, #e0e7ff 52%, #dbeafe 100%)" : template.id === "visual" ? "linear-gradient(135deg, #fbf8f4 0%, #f0e8e3 100%)" : `#${template.background}`, fontFamily }}>
+      <div className="relative isolate flex aspect-video flex-col items-center justify-center overflow-hidden rounded-xl px-[10%] text-center" style={{ background: template.id === "modern" ? "linear-gradient(135deg, #edf2ff 0%, #e0e7ff 52%, #dbeafe 100%)" : template.id === "visual" ? "linear-gradient(135deg, #fbf8f4 0%, #f0e8e3 100%)" : `#${template.background}`, fontFamily, containerType: "inline-size" }}>
         {template.decoration === "bar" && <div className="absolute inset-y-0 left-0 w-[2.2%]" style={{ backgroundColor: `#${template.accent}` }} />}
         {template.decoration === "topline" && <div className="absolute inset-x-0 top-0 h-[2.2%]" style={{ backgroundColor: `#${template.accent}` }} />}
         {template.decoration === "professional" && <div className="absolute inset-y-0 left-0 w-[3%]" style={{ backgroundColor: `#${template.title}` }} />}
@@ -115,16 +118,16 @@ function SlidePreview({ slide, index, total, template, layout, fontFamily, fontS
         {template.decoration === "photo" && <div className="absolute right-0 top-0 h-full w-[30%]" style={{ background: "linear-gradient(145deg, #d7c2c1 0%, #b9999a 48%, #d7c9b8 100%)" }} />}
         {template.decoration === "editorial" && <div className="absolute inset-x-[9%] top-[15%] h-px" style={{ backgroundColor: `#${template.accent}` }} />}
         <div className={`relative z-10 max-w-[82%] ${template.decoration === "photo" ? "mr-[20%]" : ""}`}>
-          <p className={`${compact ? "mb-2" : "mb-4"} font-semibold uppercase tracking-[0.24em]`} style={{ color: `#${template.accent}`, fontSize: compact ? fontSizes.label / 12 : fontSizes.label }}>PRESENTASI</p>
-          <h3 className={`font-bold leading-tight ${template.decoration === "editorial" ? "font-serif" : ""}`} style={{ color: `#${template.title}`, fontSize: compact ? fontSizes.title / 12 : fontSizes.title }}>{slide.title || "Judul Presentasi"}</h3>
-          {slide.subtitle && <p className={compact ? "mt-1" : "mt-4"} style={{ color: `#${template.body}`, fontSize: compact ? fontSizes.body / 12 : fontSizes.body }}>{slide.subtitle}</p>}
+          <p className={`${compact ? "mb-2" : "mb-4"} font-semibold uppercase tracking-[0.24em]`} style={{ color: `#${template.accent}`, fontSize: previewFontSize(fontSizes.label, 8) }}>PRESENTASI</p>
+          <h3 className={`font-bold leading-tight ${template.decoration === "editorial" ? "font-serif" : ""}`} style={{ color: `#${template.title}`, fontSize: previewFontSize(fontSizes.title, 16) }}>{slide.title || "Judul Presentasi"}</h3>
+          {slide.subtitle && <p className={compact ? "mt-1" : "mt-4"} style={{ color: `#${template.body}`, fontSize: previewFontSize(fontSizes.body, 10) }}>{slide.subtitle}</p>}
           <div className={`${compact ? "mx-auto mt-2 h-0.5 w-6" : "mx-auto mt-7 h-1 w-16"} rounded-full`} style={{ backgroundColor: `#${template.accent}` }} />
         </div>
       </div>
     );
   }
   return (
-    <div className={`relative isolate aspect-video overflow-hidden rounded-xl ${compact ? "rounded-lg" : "rounded-2xl"}`} style={{ background: template.id === "modern" ? "linear-gradient(135deg, #edf2ff 0%, #e0e7ff 52%, #dbeafe 100%)" : template.id === "visual" ? "linear-gradient(135deg, #fbf8f4 0%, #f0e8e3 100%)" : `#${template.background}` }}>
+    <div className={`relative isolate aspect-video overflow-hidden rounded-xl ${compact ? "rounded-lg" : "rounded-2xl"}`} style={{ background: template.id === "modern" ? "linear-gradient(135deg, #edf2ff 0%, #e0e7ff 52%, #dbeafe 100%)" : template.id === "visual" ? "linear-gradient(135deg, #fbf8f4 0%, #f0e8e3 100%)" : `#${template.background}`, containerType: "inline-size" }}>
       {template.decoration === "bar" && <div className="absolute inset-y-0 left-0 w-[2.2%]" style={{ backgroundColor: `#${template.accent}` }} />}
       {template.decoration === "topline" && <div className="absolute inset-x-0 top-0 h-[2.2%]" style={{ backgroundColor: `#${template.accent}` }} />}
       {template.decoration === "editorial" && <div className="absolute inset-x-[5%] top-[9%] h-px" style={{ backgroundColor: `#${template.accent}` }} />}
@@ -137,14 +140,14 @@ function SlidePreview({ slide, index, total, template, layout, fontFamily, fontS
       {!hasImages && layout === "standard" && template.id === "editorial" && <><div className="absolute right-[5%] top-[18%] h-[58%] w-[31%] rounded-t-full bg-[#e9b8a1]" /><div className="absolute right-[15%] top-[26%] h-[39%] w-[11%] rounded-t-full bg-[#c24132]" /><span className="absolute right-[7%] top-[10%] text-[clamp(2rem,8vw,5rem)] font-black leading-none text-[#c24132]/20">01</span></>}
       {!hasImages && layout === "standard" && template.id === "emerald" && <><div className="absolute right-[12%] top-[19%] h-[53%] w-[16%] rotate-[-30deg] rounded-full bg-emerald-500/80" /><div className="absolute right-[26%] top-[31%] h-[39%] w-[13%] rotate-[28deg] rounded-full bg-lime-400/80" /><div className="absolute right-[18%] top-[17%] h-[67%] w-[2px] bg-emerald-800/50" /><span className="absolute right-[8%] bottom-[14%] rounded-full bg-white/80 px-3 py-1 text-[6px] font-bold uppercase tracking-widest text-emerald-800">IDEA • GROW • SHARE</span></>}
       <div className={`absolute ${template.decoration === "editorial" ? "inset-x-0 top-0 bottom-[15%]" : textBoxClass} flex flex-col ${compact ? "justify-center px-[10%] py-[8%]" : "justify-center px-[9%] py-[7%]"} ${template.decoration === "bar" || template.decoration === "professional" ? "pl-[11%]" : ""} ${centerText ? "items-center text-center" : ""}`} style={{ fontFamily }}>
-        <p className="mb-[2%] font-semibold uppercase tracking-[0.18em]" style={{ color: `#${template.accent}`, fontSize: compact ? fontSizes.label / 12 : fontSizes.label }}>
+        <p className="mb-[2%] font-semibold uppercase tracking-[0.18em]" style={{ color: `#${template.accent}`, fontSize: previewFontSize(fontSizes.label, 8) }}>
           {index === 0 ? "PRESENTASI" : `BAGIAN ${String(index).padStart(2, "0")}`}
         </p>
-        <h3 className={`font-bold leading-tight ${template.decoration === "editorial" ? "font-serif" : ""}`} style={{ color: `#${template.title}`, fontSize: compact ? fontSizes.title / 12 : fontSizes.title }}>
+        <h3 className={`font-bold leading-tight ${template.decoration === "editorial" ? "font-serif" : ""}`} style={{ color: `#${template.title}`, fontSize: previewFontSize(fontSizes.title, 16) }}>
           {slide.title || `Slide ${index + 1}`}
         </h3>
         {bullets.length > 0 && (
-          <ul className="mt-[3%] space-y-[1.6%]" style={{ color: `#${template.body}`, fontSize: compact ? fontSizes.body / 12 : fontSizes.body }}>
+          <ul className="mt-[3%] space-y-[1.6%]" style={{ color: `#${template.body}`, fontSize: previewFontSize(fontSizes.body, 10) }}>
             {bullets.slice(0, compact ? 2 : 5).map((bullet, itemIndex) => (
               <li key={itemIndex} className="flex min-w-0 items-start gap-[1.5%] leading-snug">
                 <span className="mt-[0.45em] h-[0.38em] w-[0.38em] shrink-0 rounded-full" style={{ backgroundColor: `#${template.accent}` }} />
@@ -281,6 +284,7 @@ export default function SlidePresentasi() {
   ]);
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [, setUsageRefresh] = useState(0);
   const [imageLoading, setImageLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfName, setPdfName] = useState("");
@@ -440,6 +444,7 @@ export default function SlidePresentasi() {
   };
 
   const downloadPdf = async () => {
+    if (!canUseFeature(isPro, "pdfExports") || slides.length === 0) return;
     setDownloading(true);
     setError(null);
     const exportRoot = document.createElement("div");
@@ -489,6 +494,10 @@ export default function SlidePresentasi() {
         })
         .from(exportRoot)
         .save();
+      if (!isPro) {
+        incrementFeatureUsage("pdfExports");
+        setUsageRefresh((value) => value + 1);
+      }
     } catch (e: any) {
       setError(e.message || "Gagal membuat file PDF.");
     } finally {
@@ -520,6 +529,8 @@ export default function SlidePresentasi() {
       {!isPro && !canUseAi(isPro) && (
         <UpgradeCard title="Kuota AI bulan ini habis" description={`Free ${FREE_LIMITS.aiPerMonth}×/bulan. Pro = unlimited generate.`} />
       )}
+      {!isPro && <p className="-mt-4 text-xs text-gray-500">Unduh PDF bulan ini: {getFeatureUsageThisMonth("pdfExports")}/{FREE_LIMITS.pdfExports}</p>}
+      {!isPro && !canUseFeature(isPro, "pdfExports") && <UpgradeCard title="Kuota unduh PDF habis" description={`Paket Free mendapat ${FREE_LIMITS.pdfExports} unduhan PDF per bulan. Pro = unlimited.`} />}
       {!isPro && <p className="-mt-4 text-xs text-gray-500">Upload PDF bulan ini: {getFeatureUsageThisMonth("pdfUploadsPerMonth")}/{FREE_LIMITS.pdfUploadsPerMonth}</p>}
 
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 space-y-3 shadow-sm">
@@ -765,7 +776,7 @@ export default function SlidePresentasi() {
         </button>
         <button
           onClick={downloadPdf}
-          disabled={downloading || slides.length === 0}
+          disabled={downloading || slides.length === 0 || !canUseFeature(isPro, "pdfExports")}
           className="flex items-center gap-2 bg-rose-600 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-rose-700 disabled:opacity-50"
         >
           {downloading ? (

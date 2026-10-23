@@ -378,7 +378,7 @@ export default function Citation() {
       {/* Preview */}
       {preview && (
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 space-y-3 shadow-sm">
-          <p className="text-sm leading-relaxed italic">
+          <p className="break-words text-sm leading-relaxed italic">
             {preview.split("*").map((part, i) =>
               i % 2 === 1 ? <em key={i}>{part}</em> : <span key={i}>{part}</span>
             )}

@@ -10,6 +10,8 @@ export const FREE_LIMITS = {
   quizQuestions: 3,
   bankItems: 3,
   notes: 3,
+  cvExports: 3,
+  pdfExports: 3,
   pdfMaxMb: 10,
   pdfMaxChars: 30000,
 } as const;
@@ -22,7 +24,7 @@ export const PRO_LIMITS = {
 
 const AI_USAGE_KEY = "ai-usage-monthly";
 const FEATURE_USAGE_KEY = "feature-usage-monthly";
-export type LimitedFeature = "pdfUploadsPerMonth" | "flashcardSets" | "flashcardCardsTotal" | "quizSets" | "quizQuestions" | "bankItems" | "notes";
+export type LimitedFeature = "pdfUploadsPerMonth" | "flashcardSets" | "flashcardCardsTotal" | "quizSets" | "quizQuestions" | "bankItems" | "notes" | "cvExports" | "pdfExports";
 
 function currentMonth(): string {
   const now = new Date();

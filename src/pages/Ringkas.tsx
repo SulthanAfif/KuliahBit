@@ -329,7 +329,7 @@ export default function Ringkas() {
             : `Free: ${aiUsage}/${freeLimit} kali bulan ini`}
           {" · "}
           {aiReady ? (
-            <span className="text-green-600 dark:text-green-400">AI real (Groq) aktif</span>
+            <span className="text-green-600 dark:text-green-400">AI aktif</span>
           ) : (
             <span className="text-amber-600 dark:text-amber-400">Mode demo</span>
           )}

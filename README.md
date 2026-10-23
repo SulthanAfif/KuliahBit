@@ -112,12 +112,14 @@ Batas paket Free didefinisikan di `src/lib/limits.ts` dan ditampilkan pada halam
 
 | Fitur terbatas | Jatah Free saat ini |
 | --- | ---: |
-| Generate AI | 3 kali per hari |
+| Generate AI | 3 kali per bulan |
+| Unduh teks CV | 3 kali per bulan |
+| Semua unduhan PDF (CV, presentasi, surat, dan konverter) | 3 kali per bulan total |
 | Flashcard | 3 set dan 3 kartu total |
 | Kuis | 3 set dan 3 soal total |
 | Bank soal/materi | 3 item |
 | Catatan | 3 item |
-| PDF | Maksimal 5 MB dan teks dibatasi 15.000 karakter |
+| Impor PDF | Maksimal 10 MB dan teks dibatasi 30.000 karakter |
 
 Ketika kuota tercapai, aksi yang dibatasi mengarahkan pengguna ke halaman `/pricing`. Fitur yang tidak tercantum pada tabel tetap tersedia sesuai implementasi aplikasi.
 

@@ -129,6 +129,7 @@ export async function docxToHtmlString(file: File): Promise<string> {
 <html lang="id">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${title}</title>
   <style>
     @page { margin: 15mm; size: A4; }
@@ -148,6 +149,10 @@ export async function docxToHtmlString(file: File): Promise<string> {
     td, th { border: 1px solid #999; padding: 6px 8px; }
     h1, h2, h3 { margin-top: 1.2em; page-break-after: avoid; }
     p { margin: 0.45em 0; }
+    @media screen and (max-width: 640px) {
+      body { max-width: none; padding: 6mm; font-size: 11pt; overflow-wrap: anywhere; }
+      table { display: block; max-width: 100%; overflow-x: auto; }
+    }
     @media print {
       body { padding: 0; max-width: none; }
     }

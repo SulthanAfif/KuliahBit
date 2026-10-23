@@ -21,6 +21,9 @@ import {
   pptxToPrintableHtml,
   printHtmlAsPdf,
 } from "../lib/convert";
+import { FREE_LIMITS, canUseFeature, getFeatureUsageThisMonth, incrementFeatureUsage } from "../lib/limits";
+import { usePlan } from "../context/PlanContext";
+import { UpgradeCard } from "../components/ProGate";
 
 type ConvertId =
   | "csv-xlsx"
@@ -129,6 +132,8 @@ const OPTIONS: ConvertOption[] = [
 ];
 
 export default function Converter() {
+  const { isPro } = usePlan();
+  const [, setUsageRefresh] = useState(0);
   const [selected, setSelected] = useState<ConvertId>("docx-pdf");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -143,6 +148,14 @@ export default function Converter() {
   useEffect(() => () => pptxDisposeRef.current?.(), []);
 
   const option = OPTIONS.find((o) => o.id === selected)!;
+  const canExportPdf = canUseFeature(isPro, "pdfExports");
+
+  const recordPdfExport = () => {
+    if (!isPro) {
+      incrementFeatureUsage("pdfExports");
+      setUsageRefresh((value) => value + 1);
+    }
+  };
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -189,11 +202,12 @@ export default function Converter() {
   };
 
   const handleDownloadPdf = async () => {
-    if (!sourceFile) return;
+    if (!sourceFile || !canUseFeature(isPro, "pdfExports")) return;
     setLoading(true);
     setError(null);
     try {
       await docxToPdf(sourceFile);
+      recordPdfExport();
       setSuccess("PDF berhasil diunduh.");
     } catch (err: any) {
       setError(err?.message || "Gagal membuat PDF.");
@@ -203,22 +217,25 @@ export default function Converter() {
   };
 
   const handlePrintPdf = () => {
-    if (!previewHtml) return;
+    if (!previewHtml || !canUseFeature(isPro, "pdfExports")) return;
     try {
       printHtmlAsPdf(
         previewHtml,
         fileName?.replace(/\.(docx|pptx)$/i, "") || "dokumen"
       );
+      recordPdfExport();
     } catch (err: any) {
       setError(err?.message || "Gagal membuka dialog cetak. Izinkan popup.");
     }
   };
 
   const handlePrintIframe = () => {
+    if (!canUseFeature(isPro, "pdfExports")) return;
     const iframe = iframeRef.current;
     if (!iframe?.contentWindow) return;
     iframe.contentWindow.focus();
     iframe.contentWindow.print();
+    recordPdfExport();
   };
 
   return (
@@ -232,6 +249,9 @@ export default function Converter() {
           CSV, Excel, PDF, Word, PPTX - proses di browser, tanpa server
         </p>
       </div>
+
+      {!isPro && <p className="text-xs text-gray-500">Unduh PDF bulan ini: {getFeatureUsageThisMonth("pdfExports")}/{FREE_LIMITS.pdfExports}</p>}
+      {!isPro && !canExportPdf && <UpgradeCard title="Kuota unduh PDF habis" description={`Paket Free mendapat ${FREE_LIMITS.pdfExports} unduhan PDF per bulan untuk semua fitur. Pro = unlimited.`} />}
 
       {(selected === "docx-pdf" || selected === "pptx-pdf") && (
         <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4 text-sm text-violet-800 dark:border-violet-800 dark:bg-violet-950/30 dark:text-violet-200">
@@ -318,7 +338,7 @@ export default function Converter() {
           <div className="flex flex-wrap gap-2">
             {selected === "docx-pdf" && <button
               onClick={handleDownloadPdf}
-              disabled={loading || !sourceFile}
+              disabled={loading || !sourceFile || !canExportPdf}
               className="flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
@@ -326,6 +346,7 @@ export default function Converter() {
             </button>}
             <button
               onClick={handlePrintPdf}
+              disabled={!canExportPdf}
               className="flex items-center gap-2 rounded-xl border border-violet-300 px-5 py-2.5 text-sm font-medium text-violet-700 hover:bg-violet-50 dark:border-violet-700 dark:text-violet-300 dark:hover:bg-violet-950"
             >
               <Printer size={16} />
@@ -333,6 +354,7 @@ export default function Converter() {
             </button>
             {selected === "docx-pdf" && <button
               onClick={handlePrintIframe}
+              disabled={!canExportPdf}
               className="flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               <Printer size={16} /> Cetak dari preview
@@ -348,7 +370,7 @@ export default function Converter() {
               ref={iframeRef}
               title={selected === "pptx-pdf" ? "Preview presentasi PowerPoint" : "Preview Word"}
               srcDoc={previewHtml}
-              className="h-[480px] w-full bg-white"
+              className="h-[320px] w-full bg-white sm:h-[480px]"
               sandbox={selected === "pptx-pdf" ? "allow-same-origin" : "allow-modals allow-same-origin allow-scripts"}
             />
           </div>

@@ -11,8 +11,9 @@ const FREE_FEATURES = [
   { text: `Bank soal/materi: ${FREE_LIMITS.bankItems} item per bulan`, ok: true },
   { text: `Catatan: ${FREE_LIMITS.notes} catatan baru per bulan`, ok: true },
   { text: `Impor PDF: ${FREE_LIMITS.pdfUploadsPerMonth} kali per bulan, maks. ${FREE_LIMITS.pdfMaxMb} MB dan ${FREE_LIMITS.pdfMaxChars.toLocaleString("id-ID")} karakter teks per file`, ok: true },
-  { text: "CV dengan template Klasik", ok: true },
-  { text: "Kuota AI, impor PDF, flashcard, kuis, bank materi, dan catatan tanpa batas", ok: false },
+  { text: `Semua unduhan PDF: ${FREE_LIMITS.pdfExports} kali per bulan total`, ok: true },
+  { text: `Unduh teks CV: ${FREE_LIMITS.cvExports} kali per bulan`, ok: true },
+  { text: "Kuota AI, impor/unduh PDF, flashcard, kuis, bank materi, dan catatan tanpa batas", ok: false },
   { text: "Template CV premium", ok: false },
 ];
 
@@ -21,6 +22,7 @@ const PRO_FEATURES = [
   "Flashcard, kuis, bank soal/materi, dan catatan tanpa kuota bulanan",
   `Impor PDF tanpa kuota bulanan, maks. ${PRO_LIMITS.pdfMaxMb} MB dan ${PRO_LIMITS.pdfMaxChars.toLocaleString("id-ID")} karakter teks per file`,
   "Semua template CV, termasuk template premium",
+  "Unduh PDF tanpa kuota bulanan",
   "Status Pro demo berlaku 30 hari dan tersimpan di browser ini",
 ];
 

@@ -28,7 +28,7 @@ const faqs = [
   ["Perlu membuat akun untuk mulai?", "Tidak. Kamu bisa langsung memakai fitur yang tersedia tanpa registrasi."],
   ["Bisa tahu nilai UAS minimum yang harus saya capai?", "Bisa. Masukkan nilai yang sudah diperoleh beserta bobot komponennya untuk menghitung target nilai UAS."],
   ["Di mana data saya disimpan?", "Data dan draft disimpan di penyimpanan browser pada perangkat ini. Data tidak otomatis tersinkron ke perangkat lain. Fitur AI memproses konten yang kamu kirim untuk menghasilkan bantuan belajar."],
-  ["Apa batas paket Free?", `Free mencakup ${FREE_LIMITS.aiPerMonth} penggunaan AI, ${FREE_LIMITS.pdfUploadsPerMonth} impor PDF, ${FREE_LIMITS.flashcardSets} set flashcard dan ${FREE_LIMITS.flashcardCardsTotal} kartu, ${FREE_LIMITS.quizSets} set kuis dan ${FREE_LIMITS.quizQuestions} soal, ${FREE_LIMITS.bankItems} item bank, serta ${FREE_LIMITS.notes} catatan baru per bulan. Pro menghapus kuota bulanan dan memberi batas PDF per file lebih besar.`],
+  ["Apa batas paket Free?", `Free mencakup ${FREE_LIMITS.aiPerMonth} penggunaan AI, ${FREE_LIMITS.pdfUploadsPerMonth} impor PDF, ${FREE_LIMITS.pdfExports} unduhan PDF total, ${FREE_LIMITS.cvExports} unduhan teks CV, ${FREE_LIMITS.flashcardSets} set flashcard dan ${FREE_LIMITS.flashcardCardsTotal} kartu, ${FREE_LIMITS.quizSets} set kuis dan ${FREE_LIMITS.quizQuestions} soal, ${FREE_LIMITS.bankItems} item bank, serta ${FREE_LIMITS.notes} catatan baru per bulan. Pro menghapus kuota bulanan dan memberi batas PDF per file lebih besar.`],
   ["Bisa mengunduh dokumen?", "Bisa. Surat Kilat, CV, dan slide memiliki pratinjau serta opsi cetak atau simpan sebagai PDF."],
 ];
 

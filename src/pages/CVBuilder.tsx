@@ -3,6 +3,8 @@ import { Briefcase, Download, Plus, Trash2, ImagePlus, Printer, Crown, Check } f
 import { getFromStorage, saveToStorage, usePersistentState } from "../lib/storage";
 import { usePlan } from "../context/PlanContext";
 import { Link, useNavigate } from "react-router-dom";
+import { FREE_LIMITS, canUseFeature, getFeatureUsageThisMonth, incrementFeatureUsage } from "../lib/limits";
+import { UpgradeCard } from "../components/ProGate";
 
 interface CVData {
   photo: string;
@@ -55,6 +57,7 @@ export default function CVBuilder() {
   const [data, setData] = useState<CVData>(() => ({ ...empty, ...getFromStorage("cv-data", empty) }));
   const [templateId, setTemplateId] = usePersistentState<(typeof CV_TEMPLATES)[number]["id"]>("draft-cv-template", "classic");
   const [photoError, setPhotoError] = useState("");
+  const [, setUsageRefresh] = useState(0);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -64,6 +67,26 @@ export default function CVBuilder() {
   const set = <K extends keyof CVData>(key: K, val: CVData[K]) =>
     setData((d) => ({ ...d, [key]: val }));
   const selectedTemplate = CV_TEMPLATES.find((template) => template.id === templateId) || CV_TEMPLATES[0];
+  const canExport = canUseFeature(isPro, "cvExports");
+  const canExportPdf = canUseFeature(isPro, "pdfExports");
+
+  const exportCv = (action: () => void) => {
+    if (!canUseFeature(isPro, "cvExports")) return;
+    action();
+    if (!isPro) {
+      incrementFeatureUsage("cvExports");
+      setUsageRefresh((value) => value + 1);
+    }
+  };
+
+  const exportPdf = () => {
+    if (!canUseFeature(isPro, "pdfExports")) return;
+    window.print();
+    if (!isPro) {
+      incrementFeatureUsage("pdfExports");
+      setUsageRefresh((value) => value + 1);
+    }
+  };
 
   const downloadTxt = () => {
     const lines = [
@@ -161,16 +184,21 @@ export default function CVBuilder() {
         </div>
         <div className="flex w-full shrink-0 flex-wrap gap-2 print:hidden sm:w-auto">
           <button
-            onClick={downloadTxt}
+            onClick={() => exportCv(downloadTxt)}
+            disabled={!canExport}
             className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2.5 rounded-xl text-sm hover:bg-slate-900"
           >
             <Download size={16} /> Unduh teks
           </button>
-          <button onClick={() => window.print()} className="flex items-center gap-2 rounded-xl bg-slate-600 px-4 py-2.5 text-sm text-white hover:bg-slate-700">
+          <button onClick={exportPdf} disabled={!canExportPdf} className="flex items-center gap-2 rounded-xl bg-slate-600 px-4 py-2.5 text-sm text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50">
             <Printer size={16} /> Cetak / PDF
           </button>
         </div>
       </div>
+
+      {!isPro && <p className="text-xs text-gray-500">Unduh teks CV bulan ini: {getFeatureUsageThisMonth("cvExports")}/{FREE_LIMITS.cvExports} · Unduh PDF di semua fitur: {getFeatureUsageThisMonth("pdfExports")}/{FREE_LIMITS.pdfExports}</p>}
+      {!isPro && !canExport && <UpgradeCard title="Kuota ekspor CV habis" description={`Paket Free mendapat ${FREE_LIMITS.cvExports} ekspor CV per bulan. Pro = unlimited.`} />}
+      {!isPro && !canExportPdf && <UpgradeCard title="Kuota unduh PDF habis" description={`Paket Free mendapat ${FREE_LIMITS.pdfExports} unduhan PDF per bulan untuk semua fitur. Pro = unlimited.`} />}
 
       <Section title="Template premium">
         <p className="-mt-1 text-sm text-gray-500">Pilih desain untuk pratinjau dan PDF CV kamu.</p>
@@ -530,6 +558,26 @@ export default function CVBuilder() {
         .cv-year-row { display: flex; justify-content: space-between; gap: 16px; }
         .cv-year-value { flex-shrink: 0; color: #475569; text-align: right; }
         .cv-print-only { display: none; }
+        @media screen and (max-width: 640px) {
+          .cv-document:not(.cv-print-only) { width: 100%; min-height: 0; padding: 18px; overflow-wrap: anywhere; font-size: 12px; }
+          .cv-document.cv-classic:not(.cv-print-only) { padding: 18px; box-shadow: 0 0 0 6px #0f172a; }
+          .cv-document:not(.cv-print-only) .cv-doc-header { align-items: flex-start; gap: 12px; padding: 0 0 12px; margin: 0 0 14px; }
+          .cv-document:not(.cv-print-only) .cv-doc-header img { width: 58px; height: 78px; flex: 0 0 auto; }
+          .cv-document:not(.cv-print-only) .cv-doc-header h1 { font-size: 21px; overflow-wrap: anywhere; }
+          .cv-document:not(.cv-print-only) .cv-doc-header p { font-size: 11px; overflow-wrap: anywhere; }
+          .cv-document:not(.cv-print-only) .cv-doc-body,
+          .cv-document.cv-graphite:not(.cv-print-only) .cv-doc-body,
+          .cv-document.cv-sidebar:not(.cv-print-only) .cv-doc-body,
+          .cv-document.cv-emerald:not(.cv-print-only) .cv-doc-body,
+          .cv-document.cv-plum:not(.cv-print-only) .cv-doc-body { display: block; }
+          .cv-document:not(.cv-print-only) .cv-doc-sidebar { min-height: 0; margin-bottom: 14px; padding: 12px; }
+          .cv-document.cv-sidebar:not(.cv-print-only) .cv-doc-header,
+          .cv-document.cv-emerald:not(.cv-print-only) .cv-doc-header,
+          .cv-document.cv-plum:not(.cv-print-only) .cv-doc-header { margin: 0 0 14px; padding: 14px; }
+          .cv-document:not(.cv-print-only) .cv-year-row,
+          .cv-document:not(.cv-print-only) .cv-experience-row { flex-wrap: wrap; gap: 2px 8px; }
+          .cv-document:not(.cv-print-only) .cv-year-value { text-align: left; }
+        }
         @media print {
           @page { size: A4; margin: 16mm; }
           body * { visibility: hidden !important; }

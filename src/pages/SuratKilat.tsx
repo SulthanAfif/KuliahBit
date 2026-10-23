@@ -1,6 +1,9 @@
 import { useRef, useState } from "react";
 import { usePersistentState } from "../lib/storage";
 import { Mail, Copy, Check, Download, Loader2, AlertCircle } from "lucide-react";
+import { FREE_LIMITS, canUseFeature, getFeatureUsageThisMonth, incrementFeatureUsage } from "../lib/limits";
+import { usePlan } from "../context/PlanContext";
+import { UpgradeCard } from "../components/ProGate";
 
 type TemplateId = "izin_sakit" | "izin_keluarga" | "cuti" | "perpanjangan" | "nilai";
 
@@ -150,6 +153,8 @@ ${v.nama || "Nama Anda"}`,
 ];
 
 export default function SuratKilat() {
+  const { isPro } = usePlan();
+  const [, setUsageRefresh] = useState(0);
   const [tpl, setTpl] = usePersistentState<TemplateId>("draft-surat-template", "izin_sakit");
   const [values, setValues] = usePersistentState<Record<string, string>>("draft-surat-values", {});
   const [copied, setCopied] = useState(false);
@@ -167,6 +172,7 @@ export default function SuratKilat() {
   };
 
   const downloadPdf = async () => {
+    if (!canUseFeature(isPro, "pdfExports")) return;
     if (!previewRef.current) return;
     setDownloading(true);
     setError("");
@@ -184,6 +190,10 @@ export default function SuratKilat() {
         })
         .from(previewRef.current)
         .save();
+      if (!isPro) {
+        incrementFeatureUsage("pdfExports");
+        setUsageRefresh((value) => value + 1);
+      }
     } catch (e) {
       setError(e instanceof Error ? `PDF gagal dibuat: ${e.message}` : "PDF gagal dibuat.");
     } finally {
@@ -202,6 +212,9 @@ export default function SuratKilat() {
           Isi surat formal, lihat pratinjau A4, lalu unduh sebagai PDF
         </p>
       </div>
+
+      {!isPro && <p className="text-xs text-gray-500">Unduh PDF bulan ini: {getFeatureUsageThisMonth("pdfExports")}/{FREE_LIMITS.pdfExports}</p>}
+      {!isPro && !canUseFeature(isPro, "pdfExports") && <UpgradeCard title="Kuota unduh PDF habis" description={`Paket Free mendapat ${FREE_LIMITS.pdfExports} unduhan PDF per bulan untuk semua fitur. Pro = unlimited.`} />}
 
       <div className="flex flex-wrap gap-2">
         {TEMPLATES.map((t) => (
@@ -241,8 +254,8 @@ export default function SuratKilat() {
           <h2 className="text-sm font-semibold">Pratinjau PDF · A4</h2>
           <span className="text-xs text-gray-500">Tampilan sesuai file unduhan</span>
         </div>
-        <div ref={previewRef} className="mx-auto min-h-[900px] max-w-[794px] bg-white px-10 py-14 text-gray-900 shadow-lg sm:min-h-[1123px] sm:px-[76px] sm:py-[72px]">
-          <pre className="whitespace-pre-wrap break-words font-serif text-[13px] leading-[1.9]">{text}</pre>
+        <div ref={previewRef} className="mx-auto min-h-[700px] w-full max-w-[794px] bg-white px-5 py-7 text-gray-900 shadow-lg sm:min-h-[1123px] sm:px-[76px] sm:py-[72px]">
+          <pre className="whitespace-pre-wrap break-words font-serif text-xs leading-[1.8] sm:text-[13px] sm:leading-[1.9]">{text}</pre>
         </div>
         <div className="mx-auto mt-4 flex max-w-[794px] flex-wrap gap-2">
           <button
@@ -254,7 +267,7 @@ export default function SuratKilat() {
           </button>
           <button
             onClick={() => void downloadPdf()}
-            disabled={downloading}
+            disabled={downloading || !canUseFeature(isPro, "pdfExports")}
             className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm text-gray-800 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
           >
             {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
