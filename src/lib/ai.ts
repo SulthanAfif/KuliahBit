@@ -58,12 +58,8 @@ async function callGroq(system: string, user: string): Promise<string> {
 const SYSTEM_PROMPTS: Record<AIMode, string> = {
   ringkas: `Kamu adalah asisten belajar untuk mahasiswa Indonesia.
 Ringkas teks materi kuliah berikut dalam bahasa Indonesia yang jelas dan padat.
-Gunakan format:
-📌 Ringkasan
-1. Poin penting pertama
-2. Poin penting kedua
-dst.
-Maksimal 8 poin. Jangan mengarang di luar teks.`,
+Tulis satu kalimat yang menangkap inti materi, lalu susun 3 sampai 6 poin utama berdasarkan gagasan (gabungkan detail yang saling berkaitan).
+Gunakan bahasa yang natural dan mudah dipahami mahasiswa. Tebalkan hanya istilah atau konsep kunci dengan Markdown **tebal**. Hindari mengulang isi, kalimat pembuka yang generik, dan detail teknis yang tidak penting bagi inti materi. Jangan mengarang di luar teks.`,
 
   flashcard: `Kamu adalah asisten belajar untuk mahasiswa Indonesia.
 Dari teks materi berikut, buat 5–8 flashcard (pertanyaan & jawaban singkat) dalam bahasa Indonesia.

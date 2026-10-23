@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { Fragment, useState, useRef } from "react";
 import {
   Sparkles,
   Lock,
@@ -16,6 +16,16 @@ import { FREE_LIMITS } from "../lib/limits";
 import { extractTextFromPDF } from "../lib/pdf";
 import type { FlashcardSet } from "../types";
 import { v4 as uuid } from "uuid";
+
+function renderInlineMarkdown(line: string) {
+  return line.split(/(\*\*.+?\*\*)/g).map((part, index) =>
+    part.startsWith("**") && part.endsWith("**") ? (
+      <strong key={index}>{part.slice(2, -2)}</strong>
+    ) : (
+      part
+    )
+  );
+}
 
 export default function Ringkas() {
   const { isPro } = usePlan();
@@ -340,8 +350,13 @@ export default function Ringkas() {
       )}
 
       {result && (
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 whitespace-pre-wrap text-sm leading-relaxed shadow-sm">
-          {result}
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 text-sm leading-relaxed shadow-sm">
+          {result.split("\n").map((line, index) => (
+            <Fragment key={index}>
+              {index > 0 && <br />}
+              {renderInlineMarkdown(line)}
+            </Fragment>
+          ))}
         </div>
       )}
     </div>
