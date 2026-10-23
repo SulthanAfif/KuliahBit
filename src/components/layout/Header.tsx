@@ -5,15 +5,24 @@ import { getFromStorage } from "../../lib/storage";
 import { Link, useLocation } from "react-router-dom";
 
 const RESET_KEYS: Record<string, string[]> = {
-  "/tugas": ["tasks"],
-  "/agenda": ["agenda-items"],
-  "/flashcards": ["flashcard-sets"],
-  "/quiz": ["quiz-sets"],
-  "/notes": ["notes"],
+  "/tugas": ["tasks", "draft-task-open", "draft-task-title", "draft-task-due-date", "draft-task-priority", "draft-task-course"],
+  "/agenda": ["agenda-items", "draft-agenda-open", "draft-agenda-title", "draft-agenda-date", "draft-agenda-time", "draft-agenda-type", "draft-agenda-notes"],
+  "/flashcards": ["flashcard-sets", "draft-flashcards-open", "draft-flashcards-title", "draft-flashcards-front", "draft-flashcards-back"],
+  "/quiz": ["quiz-sets", "draft-quiz-open", "draft-quiz-title", "draft-quiz-question", "draft-quiz-options"],
+  "/ringkas": ["draft-ringkas-text", "draft-ringkas-result"],
+  "/tanya-ai": ["draft-tanya-ai-context", "draft-tanya-ai-messages", "draft-tanya-ai-input", "draft-tanya-ai-questions", "draft-tanya-ai-answer", "draft-tanya-ai-term", "draft-tanya-ai-term-result"],
+  "/laporan-praktikum": ["draft-laporan-praktikum"],
+  "/beasiswa": ["opp-tracker"],
+  "/cram": ["draft-cram-text", "draft-cram-minutes", "draft-cram-result"],
+  "/notes": ["notes", "draft-note-open", "draft-note-title", "draft-note-content"],
+  "/nilai-akhir": ["draft-nilai-akhir-items", "draft-nilai-akhir-target", "draft-nilai-akhir-focus"],
+  "/slides": ["draft-slide-topic", "draft-slide-material", "draft-slide-content", "draft-slide-template", "draft-slide-layout", "draft-slide-font", "draft-slide-font-sizes"],
+  "/cv": ["cv-data", "draft-cv-template"],
+  "/surat": ["draft-surat-template", "draft-surat-values"],
+  "/parafrase": ["draft-parafrase-text", "draft-parafrase-result", "draft-parafrase-style"],
+  "/citation": ["citations", "draft-citation-style", "draft-citation-type", "draft-citation-authors", "draft-citation-title", "draft-citation-year", "draft-citation-publisher", "draft-citation-city", "draft-citation-journal", "draft-citation-volume", "draft-citation-issue", "draft-citation-pages", "draft-citation-url", "draft-citation-access-date", "draft-citation-university"],
   "/absensi": ["attendance"],
-  "/cv": ["cv-data"],
-  "/citation": ["citations"],
-  "/bank-soal": ["bank-soal"],
+  "/bank-soal": ["bank-soal", "draft-bank-soal-open", "draft-bank-soal-type", "draft-bank-soal-title", "draft-bank-soal-course", "draft-bank-soal-topic", "draft-bank-soal-content"],
   "/jadwal": ["schedule-items"],
   "/ipk": ["ipk-items"],
   "/skripsi": ["skripsi-progress", "skripsi-judul"],
@@ -42,13 +51,17 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
     const a = document.createElement("a");
     a.href = url;
     a.download = `kuliahbit-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const handleReset = () => {
     if (!window.confirm("Reset fitur ini? Data yang tersimpan di fitur ini akan dihapus.")) return;
-    (RESET_KEYS[pathname] || []).forEach((key) => localStorage.removeItem(key));
+    const keys = RESET_KEYS[pathname];
+    if (!keys?.length) return;
+    keys.forEach((key) => localStorage.removeItem(key));
     window.location.reload();
   };
 

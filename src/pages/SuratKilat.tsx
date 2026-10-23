@@ -176,9 +176,25 @@ export default function SuratKilat() {
     if (!previewRef.current) return;
     setDownloading(true);
     setError("");
+    let exportHost: HTMLDivElement | undefined;
     try {
       const html2pdfModule = await import("html2pdf.js");
       const html2pdf = (html2pdfModule as any).default || html2pdfModule;
+      // html2canvas cannot parse Tailwind v4's oklch colors. Export a plain,
+      // inline-styled copy so the PDF renderer never reads those app styles.
+      exportHost = document.createElement("div");
+      exportHost.style.cssText = "position:fixed;left:-10000px;top:0;width:794px;background:#fff;";
+      const exportPage = previewRef.current.cloneNode(true) as HTMLDivElement;
+      exportPage.removeAttribute("class");
+      exportPage.removeAttribute("id");
+      exportPage.style.cssText = "box-sizing:border-box;width:794px;min-height:1123px;padding:72px 76px;background:#fff;color:#111827;font-family:Georgia,'Times New Roman',serif;font-size:13px;line-height:1.9;";
+      const exportText = exportPage.querySelector("pre");
+      if (exportText) {
+        exportText.removeAttribute("class");
+        exportText.style.cssText = "margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-family:Georgia,'Times New Roman',serif;font-size:13px;line-height:1.9;color:#111827;";
+      }
+      exportHost.appendChild(exportPage);
+      document.body.appendChild(exportHost);
       await html2pdf()
         .set({
           margin: 0,
@@ -188,7 +204,7 @@ export default function SuratKilat() {
           jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
           pagebreak: { mode: ["css", "legacy"] },
         })
-        .from(previewRef.current)
+        .from(exportPage)
         .save();
       if (!isPro) {
         incrementFeatureUsage("pdfExports");
@@ -197,6 +213,7 @@ export default function SuratKilat() {
     } catch (e) {
       setError(e instanceof Error ? `PDF gagal dibuat: ${e.message}` : "PDF gagal dibuat.");
     } finally {
+      exportHost?.remove();
       setDownloading(false);
     }
   };
