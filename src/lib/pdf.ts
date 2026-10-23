@@ -1,8 +1,9 @@
 import * as pdfjs from "pdfjs-dist";
+import pdfWorkerUrl from "../pdf.worker.ts?worker&url";
 
 // Bundle our own worker so the Promise.withResolvers polyfill is installed in
 // the worker realm too (polyfills in main.tsx do not cross worker boundaries).
-pdfjs.GlobalWorkerOptions.workerSrc = new URL("../pdf.worker.ts", import.meta.url).toString();
+pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
