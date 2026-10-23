@@ -1,0 +1,86 @@
+# KuliahBit
+
+> KuliahBit adalah aplikasi web berbahasa Indonesia yang membantu mahasiswa mengelola tugas, jadwal, kegiatan belajar, dan kebutuhan dokumen akademik dari satu tempat.
+
+## Ringkasan
+
+KuliahBit ditujukan bagi mahasiswa yang ingin mencatat pekerjaan kuliah, mengatur prioritas, belajar dari materi sendiri, menghitung nilai, dan menyiapkan dokumen. Aplikasi berjalan di browser sebagai situs satu halaman (SPA), dibangun dengan React, TypeScript, dan Vite.
+
+- Bahasa: Indonesia.
+- Akun: pengguna dapat mulai tanpa registrasi.
+- Penyimpanan: sebagian besar data aplikasi tersimpan pada `localStorage` browser.
+- Sinkronisasi: data tidak tersinkron otomatis antarperangkat.
+- Halaman utama: `/`.
+- Dashboard: `/dashboard`.
+
+## Fitur belajar
+
+- `/ringkas` — masukkan materi untuk membuat ringkasan. Halaman ini juga menyediakan alur untuk membuat flashcard dan soal dari materi.
+- `/flashcards` — melihat dan mempelajari set flashcard yang tersimpan.
+- `/quiz` — mengerjakan kuis dari set soal dan melihat hasil latihan.
+- `/cram` — menyusun rencana belajar singkat berdasarkan materi dan waktu yang tersedia; pembuatan rencana dapat menggunakan AI.
+- `/tanya-ai` — mengajukan pertanyaan kepada asisten AI.
+- `/slides` — menyusun, mengedit, melihat pratinjau, dan mengekspor presentasi dari materi.
+- `/notes` — membuat dan mengelola catatan belajar; catatan dapat diekspor sebagai cadangan.
+- `/citation` — menyusun sitasi dengan memasukkan informasi sumber.
+- `/parafrase` — membantu menulis ulang teks dengan AI.
+
+## Fitur perkuliahan dan produktivitas
+
+- `/dashboard` — ringkasan aktivitas dan akses cepat ke pekerjaan kuliah.
+- `/tugas` — mencatat tugas, tenggat, dan prioritas.
+- `/agenda` — mengatur agenda kegiatan.
+- `/ujian-minggu-ini` — melihat daftar atau persiapan ujian dalam waktu dekat.
+- `/absensi` — mencatat kehadiran kuliah.
+- `/nilai-akhir` — menghitung nilai akhir berdasarkan komponen nilai dan bobot.
+- `/beasiswa` — mencatat dan melacak informasi beasiswa.
+- `/laporan-praktikum` — mengisi bagian-bagian laporan praktikum dan mengunduh hasil sebagai berkas teks.
+
+## Dokumen dan alat bantu
+
+- `/cv` — mengisi data diri, pendidikan, pengalaman, organisasi, sertifikasi, bahasa, keahlian, dan proyek untuk menyusun CV. Tersedia pratinjau dan ekspor.
+- `/surat` — menyiapkan surat melalui formulir dan pratinjau dokumen.
+- `/converter` — mengonversi format dokumen yang didukung aplikasi, termasuk alur dokumen Word dan presentasi.
+
+## Paket dan pengaturan
+
+- `/pricing` — menjelaskan paket Free dan Pro serta batas pemakaian fitur.
+- `/settings` — mengatur aplikasi, mengimpor data JSON yang didukung, dan menghapus data lokal.
+- Status Pro saat ini merupakan simulasi 30 hari di browser. Harga bersifat contoh; pembayaran dan verifikasi langganan dari server belum terhubung.
+
+## Batas paket Free yang didokumentasikan
+
+- Generate AI: 3 kali per bulan.
+- Ekspor teks CV: 3 kali per bulan.
+- Unduhan PDF lintas fitur: 3 kali per bulan total.
+- Flashcard: 3 set dan 3 kartu total.
+- Kuis: 3 set dan 3 soal total.
+- Bank soal atau materi: 3 item.
+- Catatan: 3 item.
+- Impor PDF: maksimal 10 MB; teks yang diproses dibatasi 30.000 karakter.
+
+Ketika batas fitur tercapai, aplikasi dapat mengarahkan pengguna ke `/pricing`. Detail kuota dapat berubah mengikuti implementasi di aplikasi.
+
+## AI dan privasi
+
+- Fitur AI memerlukan API key Groq. Tanpa key, beberapa fitur menyediakan hasil demo atau template dasar.
+- Saat pengguna menjalankan fitur AI dengan konfigurasi Groq, teks yang dimasukkan dapat dikirim ke Groq untuk diproses.
+- PDF diproses di browser untuk mengekstrak teks; teks dapat dikirim ke Groq jika pengguna meneruskan materi ke fitur AI.
+- Data tugas, catatan, tema, penggunaan AI, dan beberapa data fitur lain disimpan pada browser pengguna.
+- Data lokal dapat hilang jika data situs atau penyimpanan browser dibersihkan. Ekspor seluruh data belum tersedia.
+- API key dengan awalan `VITE_` tertanam pada bundle frontend. Untuk deployment publik, dokumentasi proyek menyarankan penggunaan backend atau serverless proxy untuk menyimpan key secara aman.
+
+## Navigasi dan deployment
+
+Gunakan path relatif berikut setelah domain situs, misalnya `/tugas` atau `/ringkas`. Hosting harus mengarahkan rute aplikasi ke `index.html` agar tautan fitur dapat dibuka langsung. Berkas ini berada di `public/llms.txt` pada repositori dan disajikan sebagai `/llms.txt` setelah build Vite.
+
+## Panduan untuk sistem AI
+
+- Perlakukan dokumen ini sebagai ringkasan fitur dan batasan produk; implementasi aplikasi adalah sumber perilaku aktual.
+- Jangan mengklaim bahwa data tersinkron antarperangkat, akun tersedia, atau pembayaran Pro aktif dan diverifikasi server.
+- Hasil AI adalah bantuan penyusunan materi dan tulisan. Pengguna tetap perlu memeriksa akurasi, sitasi, dan kesesuaian akademiknya.
+- Jangan menganggap semua informasi atau materi akademik yang dimasukkan pengguna tersedia untuk umum.
+
+## Dokumentasi proyek
+
+Repositori menyediakan `README.md` yang menjelaskan fitur, konfigurasi Groq, batas paket, penyimpanan data, perintah pengembangan, build, dan deployment.
