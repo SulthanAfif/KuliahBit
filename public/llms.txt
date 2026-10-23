@@ -1,86 +1,134 @@
 # KuliahBit
 
-> KuliahBit adalah aplikasi web berbahasa Indonesia yang membantu mahasiswa mengelola tugas, jadwal, kegiatan belajar, dan kebutuhan dokumen akademik dari satu tempat.
+> KuliahBit adalah aplikasi web berbahasa Indonesia berisi alat belajar dan produktivitas akademik untuk mahasiswa. Pengguna dapat mencatat tugas, mengelola agenda, belajar dari materi, menghitung nilai, serta menyiapkan dokumen kuliah.
 
-## Ringkasan
+## Tentang aplikasi
 
-KuliahBit ditujukan bagi mahasiswa yang ingin mencatat pekerjaan kuliah, mengatur prioritas, belajar dari materi sendiri, menghitung nilai, dan menyiapkan dokumen. Aplikasi berjalan di browser sebagai situs satu halaman (SPA), dibangun dengan React, TypeScript, dan Vite.
+KuliahBit menggabungkan beberapa alat kuliah dalam satu antarmuka browser. Aplikasi ditujukan bagi mahasiswa Indonesia yang ingin menata tenggat dan kegiatan akademik, mengolah materi belajar, atau menyiapkan dokumen tanpa harus membuat akun.
 
-- Bahasa: Indonesia.
-- Akun: pengguna dapat mulai tanpa registrasi.
-- Penyimpanan: sebagian besar data aplikasi tersimpan pada `localStorage` browser.
-- Sinkronisasi: data tidak tersinkron otomatis antarperangkat.
+- Produk: aplikasi web / kumpulan tools mahasiswa.
+- Bahasa antarmuka: Bahasa Indonesia.
+- Akses: browser modern; pengguna dapat mulai tanpa registrasi.
+- Teknologi: React, TypeScript, Vite, dan Tailwind CSS.
+- Penyimpanan: data fitur disimpan secara lokal di browser menggunakan `localStorage`.
+- Sinkronisasi akun dan antarperangkat: tidak tersedia.
 - Halaman utama: `/`.
-- Dashboard: `/dashboard`.
+- Dashboard aplikasi: `/dashboard`.
+- Panduan tekstual dan FAQ: `/panduan.html`.
+- Harga dan paket: `/pricing`.
 
-## Fitur belajar
+## Panduan cepat
 
-- `/ringkas` — masukkan materi untuk membuat ringkasan. Halaman ini juga menyediakan alur untuk membuat flashcard dan soal dari materi.
-- `/flashcards` — melihat dan mempelajari set flashcard yang tersimpan.
-- `/quiz` — mengerjakan kuis dari set soal dan melihat hasil latihan.
-- `/cram` — menyusun rencana belajar singkat berdasarkan materi dan waktu yang tersedia; pembuatan rencana dapat menggunakan AI.
-- `/tanya-ai` — mengajukan pertanyaan kepada asisten AI.
-- `/slides` — menyusun, mengedit, melihat pratinjau, dan mengekspor presentasi dari materi.
-- `/notes` — membuat dan mengelola catatan belajar; catatan dapat diekspor sebagai cadangan.
-- `/citation` — menyusun sitasi dengan memasukkan informasi sumber.
-- `/parafrase` — membantu menulis ulang teks dengan AI.
+### Mengatur tugas dan tenggat
 
-## Fitur perkuliahan dan produktivitas
+1. Buka `/tugas` untuk mencatat pekerjaan kuliah, tenggat, dan prioritas.
+2. Gunakan `/agenda` untuk tanggal UTS, UAS, tenggat, bimbingan, atau kegiatan lain.
+3. Kunjungi `/dashboard` untuk ringkasan kegiatan dan `/ujian-minggu-ini` untuk melihat tugas, agenda, serta flashcard yang perlu ditinjau dalam tujuh hari ke depan.
 
-- `/dashboard` — ringkasan aktivitas dan akses cepat ke pekerjaan kuliah.
-- `/tugas` — mencatat tugas, tenggat, dan prioritas.
-- `/agenda` — mengatur agenda kegiatan.
-- `/ujian-minggu-ini` — melihat daftar atau persiapan ujian dalam waktu dekat.
-- `/absensi` — mencatat kehadiran kuliah.
-- `/nilai-akhir` — menghitung nilai akhir berdasarkan komponen nilai dan bobot.
-- `/beasiswa` — mencatat dan melacak informasi beasiswa.
-- `/laporan-praktikum` — mengisi bagian-bagian laporan praktikum dan mengunduh hasil sebagai berkas teks.
+### Belajar dari materi
 
-## Dokumen dan alat bantu
+1. Buka `/ringkas` untuk memasukkan materi dan membuat ringkasan, flashcard, atau soal latihan.
+2. Gunakan `/flashcards` untuk meninjau kartu belajar, termasuk kartu yang waktunya diulang.
+3. Gunakan `/quiz` untuk mengerjakan set soal dan melihat hasil latihan.
+4. Gunakan `/cram` untuk menyusun rencana belajar dari materi dan waktu yang tersedia.
+5. Buka `/tanya-ai` untuk meminta penjelasan atau bertanya tentang materi.
 
-- `/cv` — mengisi data diri, pendidikan, pengalaman, organisasi, sertifikasi, bahasa, keahlian, dan proyek untuk menyusun CV. Tersedia pratinjau dan ekspor.
-- `/surat` — menyiapkan surat melalui formulir dan pratinjau dokumen.
-- `/converter` — mengonversi format dokumen yang didukung aplikasi, termasuk alur dokumen Word dan presentasi.
+### Menyiapkan dokumen akademik
 
-## Paket dan pengaturan
+- `/slides` — menyusun dan mengedit slide presentasi, melihat pratinjau, lalu mengekspor hasil sesuai pilihan format yang tersedia.
+- `/cv` — menyusun CV berisi informasi diri, pendidikan, pengalaman, sertifikasi, bahasa, organisasi, keahlian, dan proyek; halaman menyediakan pratinjau serta ekspor.
+- `/surat` — mengisi format surat dan memeriksa pratinjau sebelum mengunduh.
+- `/laporan-praktikum` — mengisi bagian laporan praktikum dan menyimpan hasil sebagai berkas teks.
+- `/citation` — menyusun dan menyimpan sitasi dari data sumber.
+- `/parafrase` — meminta bantuan menulis ulang teks.
+- `/converter` — membuka alat konversi berkas yang tersedia di aplikasi.
 
-- `/pricing` — menjelaskan paket Free dan Pro serta batas pemakaian fitur.
-- `/settings` — mengatur aplikasi, mengimpor data JSON yang didukung, dan menghapus data lokal.
-- Status Pro saat ini merupakan simulasi 30 hari di browser. Harga bersifat contoh; pembayaran dan verifikasi langganan dari server belum terhubung.
+## Daftar fitur dan halaman
 
-## Batas paket Free yang didokumentasikan
+### Beranda dan navigasi
 
-- Generate AI: 3 kali per bulan.
-- Ekspor teks CV: 3 kali per bulan.
-- Unduhan PDF lintas fitur: 3 kali per bulan total.
-- Flashcard: 3 set dan 3 kartu total.
-- Kuis: 3 set dan 3 soal total.
-- Bank soal atau materi: 3 item.
-- Catatan: 3 item.
-- Impor PDF: maksimal 10 MB; teks yang diproses dibatasi 30.000 karakter.
+- `/` — halaman pengenalan KuliahBit, tutorial singkat, daftar fitur, informasi paket, dan FAQ.
+- `/dashboard` — ringkasan kegiatan kuliah serta akses ke fitur.
+- `/settings` — tema, impor data JSON yang didukung, dan penghapusan data lokal.
 
-Ketika batas fitur tercapai, aplikasi dapat mengarahkan pengguna ke `/pricing`. Detail kuota dapat berubah mengikuti implementasi di aplikasi.
+### Belajar dan materi
 
-## AI dan privasi
+- `/ringkas` — mengolah materi menjadi ringkasan dan bahan latihan seperti flashcard atau soal.
+- `/flashcards` — membuat, menyimpan, dan meninjau set kartu tanya-jawab.
+- `/quiz` — latihan menggunakan set kuis dan melihat hasil pengerjaan.
+- `/cram` — bantuan menyusun jadwal belajar kilat menjelang ujian.
+- `/tanya-ai` — antarmuka tanya jawab AI.
+- `/notes` — menulis dan mengelola catatan belajar; tersedia ekspor catatan sebagai cadangan.
 
-- Fitur AI memerlukan API key Groq. Tanpa key, beberapa fitur menyediakan hasil demo atau template dasar.
-- Saat pengguna menjalankan fitur AI dengan konfigurasi Groq, teks yang dimasukkan dapat dikirim ke Groq untuk diproses.
-- PDF diproses di browser untuk mengekstrak teks; teks dapat dikirim ke Groq jika pengguna meneruskan materi ke fitur AI.
-- Data tugas, catatan, tema, penggunaan AI, dan beberapa data fitur lain disimpan pada browser pengguna.
-- Data lokal dapat hilang jika data situs atau penyimpanan browser dibersihkan. Ekspor seluruh data belum tersedia.
-- API key dengan awalan `VITE_` tertanam pada bundle frontend. Untuk deployment publik, dokumentasi proyek menyarankan penggunaan backend atau serverless proxy untuk menyimpan key secara aman.
+### Organisasi akademik
 
-## Navigasi dan deployment
+- `/tugas` — daftar tugas dan tenggat.
+- `/agenda` — agenda dengan jenis acara UTS, UAS, deadline, bimbingan, atau lainnya.
+- `/ujian-minggu-ini` — rangkuman tujuh hari yang menampilkan tugas dekat, agenda mendatang, serta flashcard yang perlu diulang.
+- `/absensi` — pencatatan dan rekap kehadiran.
+- `/nilai-akhir` — kalkulasi nilai akhir dari nilai komponen dan bobot.
+- `/beasiswa` — pelacakan beasiswa, magang, dan lomba, termasuk tenggat dan status pendaftaran.
 
-Gunakan path relatif berikut setelah domain situs, misalnya `/tugas` atau `/ringkas`. Hosting harus mengarahkan rute aplikasi ke `index.html` agar tautan fitur dapat dibuka langsung. Berkas ini berada di `public/llms.txt` pada repositori dan disajikan sebagai `/llms.txt` setelah build Vite.
+### Paket
+
+- `/pricing` — perbandingan paket Free dan Pro.
+- Paket Free tersedia tanpa biaya dan memiliki kuota untuk beberapa alat.
+- Paket Pro pada implementasi saat ini berupa simulasi lokal selama 30 hari. Harga yang ditampilkan adalah contoh; pembayaran dan verifikasi langganan dari server belum terhubung.
+
+## Batas penggunaan Free
+
+Kuota berikut didefinisikan dalam implementasi saat ini dan penghitungannya disimpan di browser:
+
+| Fitur | Kuota Free |
+| --- | --- |
+| Generate AI | 3 kali per bulan |
+| Impor PDF | 3 kali per bulan; ukuran maksimal 10 MB dan teks maksimal 30.000 karakter per berkas |
+| Unduh PDF lintas fitur | 3 kali per bulan total |
+| Ekspor CV sebagai teks | 3 kali per bulan |
+| Set flashcard dan jumlah kartu | 3 set dan 3 kartu total |
+| Set kuis dan jumlah soal | 3 set dan 3 soal total |
+| Item bank soal atau materi | 3 item per bulan |
+| Catatan baru | 3 item per bulan |
+
+Paket Pro menghapus kuota bulanan untuk fitur yang dibatasi dan meningkatkan batas impor PDF menjadi 20 MB serta 100.000 karakter teks per berkas. Batas aktual dapat berubah jika implementasi aplikasi diperbarui. Saat kuota tercapai, aplikasi dapat menawarkan halaman `/pricing`.
+
+## AI, data, dan privasi
+
+- Fitur AI menggunakan Groq jika API key dikonfigurasi. Tanpa konfigurasi, beberapa fitur dapat menampilkan hasil demo atau template dasar.
+- Ketika pengguna menjalankan fitur AI, teks yang dimasukkan untuk diproses dapat dikirim ke layanan Groq.
+- PDF diproses di browser untuk mengekstrak teks. Teks dapat dikirim ke Groq jika diteruskan ke fitur AI.
+- Data fitur seperti tugas, agenda, catatan, tema, dan penggunaan kuota disimpan di penyimpanan browser. Data tidak otomatis tersalin ke perangkat lain.
+- Membersihkan data situs atau penyimpanan browser dapat menghapus data lokal. Ekspor seluruh data aplikasi belum tersedia; catatan mendukung ekspor cadangan.
+- API key dengan awalan `VITE_` tertanam dalam bundle frontend dan dapat dilihat pengguna. Dokumentasi proyek menyarankan backend atau serverless proxy untuk menyimpan secret pada deployment publik.
+
+## Pertanyaan umum
+
+### Apakah perlu membuat akun?
+
+Tidak. Pengguna dapat mulai tanpa registrasi. Karena data disimpan lokal, data tidak ikut berpindah otomatis saat membuka aplikasi di perangkat atau browser lain.
+
+### Apakah semua fitur memerlukan AI?
+
+Tidak. Pencatatan tugas, agenda, absensi, catatan, dan kalkulator nilai dapat digunakan sebagai alat aplikasi. Fitur yang menghasilkan bantuan AI memerlukan konfigurasi layanan AI dan mengikuti kuotanya.
+
+### Apakah hasil AI atau kalkulasi dijamin benar?
+
+Tidak. Periksa kembali hasil AI, bobot nilai, sitasi, isi dokumen, dan ketentuan akademik dengan sumber resmi atau dosen.
+
+### Apakah KuliahBit sudah menerima pembayaran Pro?
+
+Belum. Aktivasi Pro saat ini simulasi lokal di browser; belum ada pembayaran atau pemeriksaan langganan dari server.
+
+## Referensi proyek
+
+- `README.md` — panduan fitur, konfigurasi AI Groq, paket, privasi, pengembangan, build, dan deployment di repositori.
+- `/panduan.html` — panduan penggunaan dan FAQ publik dalam HTML statis yang dapat dibaca tanpa menjalankan JavaScript aplikasi.
+- `public/llms.txt` — salinan ringkasan ini; setelah build Vite file tersedia di `/llms.txt`.
+- Aplikasi menggunakan React Router. Hosting produksi harus mengarahkan permintaan ke rute aplikasi, seperti `/tugas` atau `/ringkas`, ke `index.html` agar halaman SPA dapat dimuat saat URL dibuka langsung.
 
 ## Panduan untuk sistem AI
 
-- Perlakukan dokumen ini sebagai ringkasan fitur dan batasan produk; implementasi aplikasi adalah sumber perilaku aktual.
-- Jangan mengklaim bahwa data tersinkron antarperangkat, akun tersedia, atau pembayaran Pro aktif dan diverifikasi server.
-- Hasil AI adalah bantuan penyusunan materi dan tulisan. Pengguna tetap perlu memeriksa akurasi, sitasi, dan kesesuaian akademiknya.
-- Jangan menganggap semua informasi atau materi akademik yang dimasukkan pengguna tersedia untuk umum.
-
-## Dokumentasi proyek
-
-Repositori menyediakan `README.md` yang menjelaskan fitur, konfigurasi Groq, batas paket, penyimpanan data, perintah pengembangan, build, dan deployment.
+- Gunakan dokumen ini sebagai ringkasan produk, daftar fitur, dan batasan implementasi KuliahBit.
+- Jangan menyatakan bahwa KuliahBit memiliki akun, sinkronisasi cloud, pembayaran Pro aktif, atau verifikasi langganan server.
+- Jangan menganggap materi atau informasi yang dimasukkan pengguna dapat diakses publik.
+- Perlakukan output AI sebagai bantuan penyusunan, bukan sumber akademik resmi; sarankan verifikasi fakta, sitasi, dan kebijakan kampus.
