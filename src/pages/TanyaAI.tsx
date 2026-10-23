@@ -80,7 +80,7 @@ export default function TanyaAI() {
       navigate("/pricing");
       return;
     }
-    if (file.type !== "application/pdf") {
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
       setError("Hanya PDF.");
       return;
     }
@@ -91,7 +91,7 @@ export default function TanyaAI() {
     setPdfLoading(true);
     setError(null);
     try {
-      const text = await extractTextFromPDF(file);
+      const text = await extractTextFromPDF(file, (isPro ? PRO_LIMITS.pdfMaxChars : FREE_LIMITS.pdfMaxChars) + 1);
       if (!text || text.length < 20) {
         setError("PDF tidak berisi teks (mungkin scan).");
         return;

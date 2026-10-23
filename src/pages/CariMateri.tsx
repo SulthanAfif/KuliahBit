@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Search, FileText, Library, Upload, Loader2 } from "lucide-react";
 import { getFromStorage } from "../lib/storage";
 import { extractTextFromPDF } from "../lib/pdf";
+import { FREE_LIMITS } from "../lib/limits";
 import { Link } from "react-router-dom";
 
 interface Hit {
@@ -77,7 +78,7 @@ export default function CariMateri() {
     setLoading(true);
     setError(null);
     try {
-      const text = await extractTextFromPDF(file);
+      const text = await extractTextFromPDF(file, FREE_LIMITS.pdfMaxChars + 1);
       if (!text.trim()) throw new Error("PDF tidak berisi teks (mungkin scan).");
       setPdfText(text);
       setPdfName(file.name);

@@ -52,7 +52,7 @@ export default function Ringkas() {
       navigate("/pricing");
       return;
     }
-    if (file.type !== "application/pdf") {
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
       setError("Hanya file PDF yang didukung.");
       return;
     }
@@ -70,7 +70,7 @@ export default function Ringkas() {
     setPdfName(null);
 
     try {
-      const extracted = await extractTextFromPDF(file);
+      const extracted = await extractTextFromPDF(file, (isPro ? PRO_LIMITS.pdfMaxChars : FREE_LIMITS.pdfMaxChars) + 1);
       if (!extracted || extracted.length < 20) {
         setError(
           "Tidak ada teks yang bisa diekstrak. PDF mungkin hasil scan (gambar). Coba PDF berbasis teks."

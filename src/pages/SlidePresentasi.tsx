@@ -426,7 +426,7 @@ export default function SlidePresentasi() {
     setPdfLoading(true);
     setError(null);
     try {
-      const extracted = await extractTextFromPDF(file);
+      const extracted = await extractTextFromPDF(file, (isPro ? PRO_LIMITS.pdfMaxChars : FREE_LIMITS.pdfMaxChars) + 1);
       if (!extracted) {
         setError("Teks tidak ditemukan di PDF ini. PDF hasil scan perlu OCR terlebih dahulu.");
         return;
