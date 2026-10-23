@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { usePersistentState } from "../lib/storage";
 import {
   Presentation,
   Plus,
@@ -18,7 +19,7 @@ import {
 import { generateAI, hasAIKey } from "../lib/ai";
 import { extractTextFromPDF } from "../lib/pdf";
 import { usePlan } from "../context/PlanContext";
-import { canUseAi, incrementAiUsage, FREE_LIMITS, canUseFeature, incrementFeatureUsage, getFeatureUsageThisMonth, canUploadPdf } from "../lib/limits";
+import { canUseAi, incrementAiUsage, FREE_LIMITS, PRO_LIMITS, canUseFeature, incrementFeatureUsage, getFeatureUsageThisMonth, canUploadPdf, clipPdfText } from "../lib/limits";
 import { AiQuotaBadge, UpgradeCard } from "../components/ProGate";
 import { v4 as uuid } from "uuid";
 import { useNavigate } from "react-router-dom";
@@ -258,9 +259,9 @@ function parseOutlineToSlides(raw: string): Slide[] {
 export default function SlidePresentasi() {
   const { isPro } = usePlan();
   const navigate = useNavigate();
-  const [topic, setTopic] = useState("");
-  const [material, setMaterial] = useState("");
-  const [slides, setSlides] = useState<Slide[]>([
+  const [topic, setTopic] = usePersistentState("draft-slide-topic", "");
+  const [material, setMaterial] = usePersistentState("draft-slide-material", "");
+  const [slides, setSlides] = usePersistentState<Slide[]>("draft-slide-content", [
     makeCover(),
     {
       id: uuid(),
@@ -283,10 +284,10 @@ export default function SlidePresentasi() {
   const [imageLoading, setImageLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfName, setPdfName] = useState("");
-  const [templateId, setTemplateId] = useState<TemplateId>("modern");
-  const [layoutId, setLayoutId] = useState<LayoutId>("standard");
-  const [fontFamily, setFontFamily] = useState("Arial");
-  const [fontSizes, setFontSizes] = useState({ title: 56, body: 22, label: 12 });
+  const [templateId, setTemplateId] = usePersistentState<TemplateId>("draft-slide-template", "modern");
+  const [layoutId, setLayoutId] = usePersistentState<LayoutId>("draft-slide-layout", "standard");
+  const [fontFamily, setFontFamily] = usePersistentState("draft-slide-font", "Arial");
+  const [fontSizes, setFontSizes] = usePersistentState("draft-slide-font-sizes", { title: 56, body: 22, label: 12 });
   const [previewIndex, setPreviewIndex] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const aiReady = hasAIKey();
@@ -415,7 +416,7 @@ export default function SlidePresentasi() {
         navigate("/pricing");
         return;
       }
-      setError("Ukuran PDF maksimal 10 MB.");
+      setError(`Ukuran PDF maksimal ${isPro ? PRO_LIMITS.pdfMaxMb : FREE_LIMITS.pdfMaxMb} MB.`);
       return;
     }
     setPdfLoading(true);
@@ -426,9 +427,11 @@ export default function SlidePresentasi() {
         setError("Teks tidak ditemukan di PDF ini. PDF hasil scan perlu OCR terlebih dahulu.");
         return;
       }
-      setMaterial((current) => current.trim() ? `${current.trim()}\n\n${extracted}` : extracted);
+      const limited = clipPdfText(isPro, extracted);
+      setMaterial((current) => current.trim() ? `${current.trim()}\n\n${limited.text}` : limited.text);
       setPdfName(file.name);
       if (!isPro) incrementFeatureUsage("pdfUploadsPerMonth");
+      if (limited.clipped) setError(`Teks PDF dipotong ke ${(isPro ? PRO_LIMITS.pdfMaxChars : FREE_LIMITS.pdfMaxChars).toLocaleString("id-ID")} karakter sesuai batas paket.`);
     } catch (e) {
       setError(e instanceof Error ? `PDF gagal dibaca: ${e.message}` : "PDF gagal dibaca.");
     } finally {

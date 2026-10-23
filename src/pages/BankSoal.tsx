@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Library, Plus, Trash2, Search } from "lucide-react";
-import { getFromStorage, saveToStorage } from "../lib/storage";
+import { getFromStorage, saveToStorage, usePersistentState } from "../lib/storage";
 import { v4 as uuid } from "uuid";
 import { usePlan } from "../context/PlanContext";
 import { canAddBankItem, FREE_LIMITS, incrementFeatureUsage, getFeatureUsageThisMonth } from "../lib/limits";
@@ -23,12 +23,12 @@ export default function BankSoal() {
   const [items, setItems] = useState<Item[]>([]);
   const [q, setQ] = useState("");
   const [filterCourse, setFilterCourse] = useState("");
-  const [showForm, setShowForm] = useState(false);
-  const [type, setType] = useState<"soal" | "materi">("soal");
-  const [title, setTitle] = useState("");
-  const [course, setCourse] = useState("");
-  const [topic, setTopic] = useState("");
-  const [content, setContent] = useState("");
+  const [showForm, setShowForm] = usePersistentState("draft-bank-soal-open", false);
+  const [type, setType] = usePersistentState<"soal" | "materi">("draft-bank-soal-type", "soal");
+  const [title, setTitle] = usePersistentState("draft-bank-soal-title", "");
+  const [course, setCourse] = usePersistentState("draft-bank-soal-course", "");
+  const [topic, setTopic] = usePersistentState("draft-bank-soal-topic", "");
+  const [content, setContent] = usePersistentState("draft-bank-soal-content", "");
 
   useEffect(() => {
     setItems(getFromStorage("bank-soal", []));

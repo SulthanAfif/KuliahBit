@@ -1,27 +1,42 @@
-import { useState, useEffect } from "react";
-import { Plus, Trash2, Play, ArrowLeft, ArrowRight, RotateCcw } from "lucide-react";
-import { getFromStorage, saveToStorage } from "../lib/storage";
+import { useState, useEffect, useMemo } from "react";
+import {
+  Plus,
+  Trash2,
+  Play,
+  ArrowLeft,
+  Brain,
+} from "lucide-react";
+import { getFromStorage, saveToStorage, usePersistentState } from "../lib/storage";
 import type { FlashcardSet, Flashcard } from "../types";
 import { v4 as uuid } from "uuid";
 import { usePlan } from "../context/PlanContext";
 import { Link, useNavigate } from "react-router-dom";
-import { FREE_LIMITS, canAddFlashcardSet, canUseFeature, incrementFeatureUsage, getFeatureUsageThisMonth } from "../lib/limits";
+import { FREE_LIMITS, getFeatureUsageThisMonth, incrementFeatureUsage } from "../lib/limits";
+import { dueCards, reviewCard, ensureCardDefaults } from "../lib/spaced";
 
 export default function Flashcards() {
   const { isPro } = usePlan();
   const navigate = useNavigate();
   const [sets, setSets] = useState<FlashcardSet[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const [front, setFront] = useState("");
-  const [back, setBack] = useState("");
+  const [isCreating, setIsCreating] = usePersistentState("draft-flashcards-open", false);
+  const [newTitle, setNewTitle] = usePersistentState("draft-flashcards-title", "");
+  const [front, setFront] = usePersistentState("draft-flashcards-front", "");
+  const [back, setBack] = usePersistentState("draft-flashcards-back", "");
   const [studyMode, setStudyMode] = useState(false);
+  const [srMode, setSrMode] = useState(false);
+  const [queue, setQueue] = useState<Flashcard[]>([]);
   const [cardIndex, setCardIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
 
   useEffect(() => {
-    setSets(getFromStorage("flashcard-sets", []));
+    const raw = getFromStorage<FlashcardSet[]>("flashcard-sets", []);
+    setSets(
+      raw.map((s) => ({
+        ...s,
+        cards: s.cards.map(ensureCardDefaults),
+      }))
+    );
   }, []);
 
   useEffect(() => {
@@ -32,9 +47,14 @@ export default function Flashcards() {
   const totalCards = sets.reduce((a, s) => a + s.cards.length, 0);
   const freeLimit = FREE_LIMITS.flashcardCardsTotal;
 
+  const dueCount = useMemo(() => {
+    if (!selected) return 0;
+    return dueCards(selected.cards).length;
+  }, [selected]);
+
   const handleCreateSet = () => {
     if (!newTitle.trim()) return;
-    if (!canAddFlashcardSet(isPro, sets.length)) {
+    if (!isPro && getFeatureUsageThisMonth("flashcardSets") >= FREE_LIMITS.flashcardSets) {
       navigate("/pricing");
       return;
     }
@@ -53,11 +73,15 @@ export default function Flashcards() {
 
   const handleAddCard = () => {
     if (!selected || !front.trim() || !back.trim()) return;
-    if (!canUseFeature(isPro, "flashcardCardsTotal")) {
+    if (!isPro && getFeatureUsageThisMonth("flashcardCardsTotal") >= freeLimit) {
       navigate("/pricing");
       return;
     }
-    const card: Flashcard = { id: uuid(), front: front.trim(), back: back.trim() };
+    const card: Flashcard = ensureCardDefaults({
+      id: uuid(),
+      front: front.trim(),
+      back: back.trim(),
+    });
     setSets(
       sets.map((s) =>
         s.id === selected.id ? { ...s, cards: [...s.cards, card] } : s
@@ -86,11 +110,58 @@ export default function Flashcards() {
     );
   };
 
-  // Study mode
-  if (studyMode && selected && selected.cards.length > 0) {
-    const card = selected.cards[cardIndex];
+  const startNormalStudy = () => {
+    if (!selected || selected.cards.length === 0) return;
+    setQueue([...selected.cards]);
+    setCardIndex(0);
+    setFlipped(false);
+    setSrMode(false);
+    setStudyMode(true);
+  };
+
+  const startSpaced = () => {
+    if (!selected) return;
+    const due = dueCards(selected.cards);
+    if (due.length === 0) {
+      alert("Tidak ada kartu jatuh tempo hari ini. Semua sudah dijadwalkan ulang!");
+      return;
+    }
+    setQueue(due);
+    setCardIndex(0);
+    setFlipped(false);
+    setSrMode(true);
+    setStudyMode(true);
+  };
+
+  const applyReview = (quality: 0 | 1 | 2 | 3) => {
+    if (!selected || !queue[cardIndex]) return;
+    const updatedCard = reviewCard(queue[cardIndex], quality);
+    setSets(
+      sets.map((s) =>
+        s.id === selected.id
+          ? {
+              ...s,
+              cards: s.cards.map((c) =>
+                c.id === updatedCard.id ? updatedCard : c
+              ),
+            }
+          : s
+      )
+    );
+    setFlipped(false);
+    if (cardIndex + 1 >= queue.length) {
+      setStudyMode(false);
+      setQueue([]);
+    } else {
+      setCardIndex((i) => i + 1);
+    }
+  };
+
+  // —— Mode belajar ——
+  if (studyMode && queue.length > 0) {
+    const card = queue[cardIndex];
     return (
-      <div className="w-full space-y-6">
+      <div className="w-full max-w-2xl mx-auto space-y-6">
         <div className="flex justify-between items-center">
           <button
             onClick={() => setStudyMode(false)}
@@ -99,9 +170,11 @@ export default function Flashcards() {
             <ArrowLeft size={18} /> Kembali
           </button>
           <span className="text-sm text-gray-500">
-            {cardIndex + 1} / {selected.cards.length}
+            {srMode ? "Spaced · " : ""}
+            {cardIndex + 1} / {queue.length}
           </span>
         </div>
+
         <div
           onClick={() => setFlipped(!flipped)}
           className="bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-10 min-h-[260px] flex items-center justify-center cursor-pointer shadow-sm hover:shadow-md transition"
@@ -110,38 +183,59 @@ export default function Flashcards() {
             {flipped ? card.back : card.front}
           </p>
         </div>
-        <p className="text-center text-sm text-gray-400">Klik kartu untuk membalik</p>
-        <div className="flex justify-center gap-4">
-          <button
-            onClick={() => {
-              setFlipped(false);
-              setCardIndex((i) => (i - 1 < 0 ? selected.cards.length - 1 : i - 1));
-            }}
-            className="p-3 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
-          >
-            <ArrowLeft size={20} />
-          </button>
-          <button
-            onClick={() => setFlipped(!flipped)}
-            className="p-3 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300"
-          >
-            <RotateCcw size={20} />
-          </button>
-          <button
-            onClick={() => {
-              setFlipped(false);
-              setCardIndex((i) => (i + 1 >= selected.cards.length ? 0 : i + 1));
-            }}
-            className="p-3 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
-          >
-            <ArrowRight size={20} />
-          </button>
-        </div>
+        <p className="text-center text-sm text-gray-400">
+          Klik kartu untuk membalik
+        </p>
+
+        {srMode && flipped && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {(
+              [
+                { q: 0 as const, label: "Lupa", sub: "ulang", color: "bg-red-600 hover:bg-red-700" },
+                { q: 1 as const, label: "Susah", sub: "+1–2 hari", color: "bg-orange-500 hover:bg-orange-600" },
+                { q: 2 as const, label: "Biasa", sub: "jadwal normal", color: "bg-blue-600 hover:bg-blue-700" },
+                { q: 3 as const, label: "Mudah", sub: "lebih jarang", color: "bg-green-600 hover:bg-green-700" },
+              ]
+            ).map((b) => (
+              <button
+                key={b.q}
+                onClick={() => applyReview(b.q)}
+                className={`${b.color} text-white rounded-xl py-3 px-2 text-sm font-medium`}
+              >
+                {b.label}
+                <span className="block text-xs opacity-80 font-normal">{b.sub}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {!srMode && (
+          <div className="flex justify-center gap-3">
+            <button
+              onClick={() => {
+                setFlipped(false);
+                setCardIndex((i) => (i - 1 < 0 ? queue.length - 1 : i - 1));
+              }}
+              className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 text-sm"
+            >
+              Sebelumnya
+            </button>
+            <button
+              onClick={() => {
+                setFlipped(false);
+                setCardIndex((i) => (i + 1 >= queue.length ? 0 : i + 1));
+              }}
+              className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm"
+            >
+              Berikutnya
+            </button>
+          </div>
+        )}
       </div>
     );
   }
 
-  // List sets
+  // —— List set ——
   if (!selectedId) {
     return (
       <div className="w-full space-y-6">
@@ -149,14 +243,15 @@ export default function Flashcards() {
           <div>
             <h1 className="text-2xl font-bold">Flashcards</h1>
             <p className="text-sm text-gray-500 mt-1">
-              {isPro ? "Unlimited" : `Free: ${getFeatureUsageThisMonth("flashcardSets")}/${FREE_LIMITS.flashcardSets} set, ${getFeatureUsageThisMonth("flashcardCardsTotal")}/${freeLimit} kartu bulan ini`} • {totalCards} kartu
+              {isPro ? "Unlimited" : `Free bulan ini: ${getFeatureUsageThisMonth("flashcardSets")}/${FREE_LIMITS.flashcardSets} set · ${getFeatureUsageThisMonth("flashcardCardsTotal")}/${freeLimit} kartu`} •{" "}
+              {totalCards} kartu · ada mode{" "}
+              <span className="text-purple-600 dark:text-purple-400 font-medium">
+                Spaced Repetition
+              </span>
             </p>
           </div>
           <button
-            onClick={() => {
-              if (!canAddFlashcardSet(isPro, sets.length)) { navigate("/pricing"); return; }
-              setIsCreating(true);
-            }}
+            onClick={() => setIsCreating(true)}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 sm:w-auto"
           >
             <Plus size={18} /> Buat Set
@@ -172,42 +267,61 @@ export default function Flashcards() {
               className="flex-1 border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2 bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoFocus
             />
-            <button onClick={handleCreateSet} className="bg-blue-600 text-white px-5 py-2 rounded-xl text-sm">
+            <button
+              onClick={handleCreateSet}
+              className="bg-blue-600 text-white px-5 py-2 rounded-xl text-sm"
+            >
               Simpan
             </button>
-            <button onClick={() => setIsCreating(false)} className="text-gray-500 text-sm px-3">
+            <button
+              onClick={() => setIsCreating(false)}
+              className="text-gray-500 text-sm px-3"
+            >
               Batal
             </button>
           </div>
         )}
 
         {sets.length === 0 ? (
-          <div className="text-center py-20 text-gray-400">Belum ada set flashcard</div>
+          <div className="text-center py-20 text-gray-400">
+            Belum ada set flashcard
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sets.map((s) => (
-              <div
-                key={s.id}
-                onClick={() => setSelectedId(s.id)}
-                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 cursor-pointer hover:shadow-md transition"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-semibold">{s.title}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{s.cards.length} kartu</p>
+            {sets.map((s) => {
+              const due = dueCards(s.cards).length;
+              return (
+                <div
+                  key={s.id}
+                  onClick={() => setSelectedId(s.id)}
+                  className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 cursor-pointer hover:shadow-md transition"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold">{s.title}</h3>
+                      <p className="text-sm text-gray-500 mt-1">
+                        {s.cards.length} kartu
+                        {due > 0 && (
+                          <span className="text-purple-600 dark:text-purple-400">
+                            {" "}
+                            · {due} jatuh tempo
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteSet(s.id);
+                      }}
+                      className="text-gray-400 hover:text-red-500"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteSet(s.id);
-                    }}
-                    className="text-gray-400 hover:text-red-500"
-                  >
-                    <Trash2 size={16} />
-                  </button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -223,36 +337,54 @@ export default function Flashcards() {
     );
   }
 
-  // Detail set
+  // —— Detail set ——
   return (
     <div className="w-full space-y-6">
       <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3">
-          <button onClick={() => setSelectedId(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
+          <button
+            onClick={() => setSelectedId(null)}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+          >
             <ArrowLeft size={20} />
           </button>
           <div>
             <h1 className="text-xl font-bold">{selected?.title}</h1>
-            <p className="text-sm text-gray-500">{selected?.cards.length} kartu</p>
+            <p className="text-sm text-gray-500">
+              {selected?.cards.length} kartu
+              {dueCount > 0 && (
+                <span className="text-purple-600"> · {dueCount} jatuh tempo</span>
+              )}
+            </p>
           </div>
         </div>
         {selected && selected.cards.length > 0 && (
-          <button
-            onClick={() => {
-              setStudyMode(true);
-              setCardIndex(0);
-              setFlipped(false);
-            }}
-            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-xl hover:bg-green-700 text-sm font-medium"
-          >
-            <Play size={18} /> Mulai Belajar
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={startSpaced}
+              className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2.5 rounded-xl hover:bg-purple-700 text-sm font-medium"
+            >
+              <Brain size={18} /> Review (Spaced)
+            </button>
+            <button
+              onClick={startNormalStudy}
+              className="flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-xl hover:bg-green-700 text-sm font-medium"
+            >
+              <Play size={18} /> Belajar biasa
+            </button>
+          </div>
         )}
       </div>
 
+      <div className="rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 p-4 text-sm text-purple-900 dark:text-purple-100">
+        <strong>Spaced Repetition:</strong> setelah membalik kartu, pilih Lupa /
+        Susah / Biasa / Mudah. Kartu sulit muncul lebih sering; yang mudah lebih
+        jarang — mirip sistem Anki.
+      </div>
+
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 space-y-4">
-        <h3 className="font-medium">Tambah Kartu</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <h3 className="font-medium">Tambah kartu</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <textarea
             value={front}
             onChange={(e) => setFront(e.target.value)}
@@ -266,8 +398,11 @@ export default function Flashcards() {
             className="border border-gray-300 dark:border-gray-700 rounded-xl px-4 py-2 h-24 resize-none bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        <button onClick={handleAddCard} className="bg-blue-600 text-white px-5 py-2 rounded-xl text-sm hover:bg-blue-700">
-          Tambah Kartu
+        <button
+          onClick={handleAddCard}
+          className="bg-blue-600 text-white px-5 py-2 rounded-xl text-sm hover:bg-blue-700"
+        >
+          Tambah
         </button>
       </div>
 
@@ -275,19 +410,22 @@ export default function Flashcards() {
         {selected?.cards.map((c) => (
           <div
             key={c.id}
-            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 flex gap-4"
+            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 flex justify-between gap-3"
           >
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 flex-1 text-sm">
               <div>
-                <p className="text-xs text-gray-400 mb-0.5">Depan</p>
+                <p className="text-xs text-gray-400">Depan</p>
                 <p>{c.front}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-400 mb-0.5">Belakang</p>
+                <p className="text-xs text-gray-400">Belakang</p>
                 <p>{c.back}</p>
               </div>
             </div>
-            <button onClick={() => handleDeleteCard(c.id)} className="text-gray-400 hover:text-red-500 shrink-0">
+            <button
+              onClick={() => handleDeleteCard(c.id)}
+              className="text-gray-400 hover:text-red-500 shrink-0"
+            >
               <Trash2 size={16} />
             </button>
           </div>

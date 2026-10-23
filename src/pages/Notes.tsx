@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2, Edit2, Save, X, Download } from "lucide-react";
-import { getFromStorage, saveToStorage } from "../lib/storage";
+import { getFromStorage, saveToStorage, usePersistentState } from "../lib/storage";
 import type { Note } from "../types";
 import { v4 as uuid } from "uuid";
 import { Link, useNavigate } from "react-router-dom";
@@ -13,9 +13,9 @@ export default function Notes() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
+  const [isCreating, setIsCreating] = usePersistentState("draft-note-open", false);
+  const [title, setTitle] = usePersistentState("draft-note-title", "");
+  const [content, setContent] = usePersistentState("draft-note-content", "");
   const [search, setSearch] = useState("");
 
   useEffect(() => {

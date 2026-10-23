@@ -12,14 +12,17 @@ interface CourseAttendance {
 }
 
 export default function Absensi() {
-  const [courses, setCourses] = useState<CourseAttendance[]>([]);
+  const [courses, setCourses] = useState<CourseAttendance[]>(() =>
+    getFromStorage<CourseAttendance[]>("attendance", []).map((course) => {
+      const totalMeetings = Math.max(1, Math.floor(Number(course.totalMeetings) || 14));
+      const attended = Math.min(totalMeetings, Math.max(0, Math.floor(Number(course.attended) || 0)));
+      const sick = Math.min(totalMeetings - attended, Math.max(0, Math.floor(Number(course.sick) || 0)));
+      return { ...course, totalMeetings, attended, sick };
+    })
+  );
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [total, setTotal] = useState(14);
-
-  useEffect(() => {
-    setCourses(getFromStorage("attendance", []));
-  }, []);
 
   useEffect(() => {
     saveToStorage("attendance", courses);
@@ -46,9 +49,16 @@ export default function Absensi() {
     setCourses(
       courses.map((c) => {
         if (c.id !== id) return c;
-        const next = { ...c, [field]: Math.max(0, c[field] + delta) };
-        if (field === "attended") next.attended = Math.min(next.attended, next.totalMeetings);
-        if (field === "sick") next.sick = Math.min(next.sick, next.totalMeetings);
+        const next = { ...c };
+        if (field === "totalMeetings") {
+          next.totalMeetings = Math.max(1, Math.floor(c.totalMeetings + delta));
+          next.attended = Math.min(c.attended, next.totalMeetings);
+          next.sick = Math.min(c.sick, next.totalMeetings - next.attended);
+        } else if (field === "attended") {
+          next.attended = Math.max(0, Math.min(c.totalMeetings - c.sick, c.attended + delta));
+        } else {
+          next.sick = Math.max(0, Math.min(c.totalMeetings - c.attended, c.sick + delta));
+        }
         return next;
       })
     );
@@ -78,7 +88,7 @@ export default function Absensi() {
 
   return (
     <div className="w-full space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <UserCheck className="text-emerald-500" size={26} />
@@ -198,13 +208,14 @@ export default function Absensi() {
                   <span className="text-xs text-gray-500 mr-1">Hadir</span>
                   <button
                     onClick={() => update(c.id, "attended", -1)}
-                    className="w-7 h-7 rounded-md bg-white dark:bg-gray-700 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-600"
+                    className="w-7 h-7 rounded-md bg-white dark:bg-gray-700 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-600 disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     −
                   </button>
                   <span className="w-6 text-center text-sm font-medium">{c.attended}</span>
                   <button
                     onClick={() => update(c.id, "attended", 1)}
+                    disabled={c.present >= c.totalMeetings}
                     className="w-7 h-7 rounded-md bg-white dark:bg-gray-700 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-600"
                   >
                     +
@@ -214,13 +225,14 @@ export default function Absensi() {
                   <span className="text-xs text-gray-500 mr-1">Sakit/Izin</span>
                   <button
                     onClick={() => update(c.id, "sick", -1)}
-                    className="w-7 h-7 rounded-md bg-white dark:bg-gray-700 text-sm font-medium"
+                    className="w-7 h-7 rounded-md bg-white dark:bg-gray-700 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     −
                   </button>
                   <span className="w-6 text-center text-sm font-medium">{c.sick}</span>
                   <button
                     onClick={() => update(c.id, "sick", 1)}
+                    disabled={c.present >= c.totalMeetings}
                     className="w-7 h-7 rounded-md bg-white dark:bg-gray-700 text-sm font-medium"
                   >
                     +

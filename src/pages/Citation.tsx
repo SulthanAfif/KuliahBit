@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { BookMarked, Copy, Check, Plus, Trash2 } from "lucide-react";
-import { getFromStorage, saveToStorage } from "../lib/storage";
+import { getFromStorage, saveToStorage, usePersistentState } from "../lib/storage";
 import { v4 as uuid } from "uuid";
 
 type Style = "apa" | "mla" | "chicago" | "harvard";
@@ -153,20 +153,20 @@ function formatCitation(
 }
 
 export default function Citation() {
-  const [style, setStyle] = useState<Style>("apa");
-  const [type, setType] = useState<SourceType>("book");
-  const [authors, setAuthors] = useState("");
-  const [title, setTitle] = useState("");
-  const [year, setYear] = useState("");
-  const [publisher, setPublisher] = useState("");
-  const [city, setCity] = useState("");
-  const [journalName, setJournalName] = useState("");
-  const [volume, setVolume] = useState("");
-  const [issue, setIssue] = useState("");
-  const [pages, setPages] = useState("");
-  const [url, setUrl] = useState("");
-  const [accessDate, setAccessDate] = useState("");
-  const [university, setUniversity] = useState("");
+  const [style, setStyle] = usePersistentState<Style>("draft-citation-style", "apa");
+  const [type, setType] = usePersistentState<SourceType>("draft-citation-type", "book");
+  const [authors, setAuthors] = usePersistentState("draft-citation-authors", "");
+  const [title, setTitle] = usePersistentState("draft-citation-title", "");
+  const [year, setYear] = usePersistentState("draft-citation-year", "");
+  const [publisher, setPublisher] = usePersistentState("draft-citation-publisher", "");
+  const [city, setCity] = usePersistentState("draft-citation-city", "");
+  const [journalName, setJournalName] = usePersistentState("draft-citation-journal", "");
+  const [volume, setVolume] = usePersistentState("draft-citation-volume", "");
+  const [issue, setIssue] = usePersistentState("draft-citation-issue", "");
+  const [pages, setPages] = usePersistentState("draft-citation-pages", "");
+  const [url, setUrl] = usePersistentState("draft-citation-url", "");
+  const [accessDate, setAccessDate] = usePersistentState("draft-citation-access-date", "");
+  const [university, setUniversity] = usePersistentState("draft-citation-university", "");
   const [preview, setPreview] = useState("");
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState<CitationItem[]>(() =>

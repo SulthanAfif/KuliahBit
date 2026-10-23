@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { usePersistentState } from "../lib/storage";
 import { Mail, Copy, Check, Download, Loader2, AlertCircle } from "lucide-react";
 
 type TemplateId = "izin_sakit" | "izin_keluarga" | "cuti" | "perpanjangan" | "nilai";
@@ -149,8 +150,8 @@ ${v.nama || "Nama Anda"}`,
 ];
 
 export default function SuratKilat() {
-  const [tpl, setTpl] = useState<TemplateId>("izin_sakit");
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [tpl, setTpl] = usePersistentState<TemplateId>("draft-surat-template", "izin_sakit");
+  const [values, setValues] = usePersistentState<Record<string, string>>("draft-surat-values", {});
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState("");

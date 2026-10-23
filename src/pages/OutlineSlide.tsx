@@ -4,12 +4,13 @@ import { generateAI, hasAIKey } from "../lib/ai";
 import { canUseAi, incrementAiUsage } from "../lib/limits";
 import { usePlan } from "../context/PlanContext";
 import { useNavigate } from "react-router-dom";
+import { usePersistentState } from "../lib/storage";
 
 export default function OutlineSlide() {
   const { isPro } = usePlan();
   const navigate = useNavigate();
-  const [text, setText] = useState("");
-  const [result, setResult] = useState("");
+  const [text, setText] = usePersistentState("draft-outline-slide-text", "");
+  const [result, setResult] = usePersistentState("draft-outline-slide-result", "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);

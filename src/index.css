@@ -19,6 +19,11 @@ body {
   font-family: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", sans-serif;
 }
 
+select option {
+  color: #111827;
+  background-color: #ffffff;
+}
+
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;

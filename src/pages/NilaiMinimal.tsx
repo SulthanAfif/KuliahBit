@@ -1,13 +1,14 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
+import { usePersistentState } from "../lib/storage";
 import { Calculator } from "lucide-react";
 
 export default function NilaiMinimal() {
-  const [target, setTarget] = useState(70);
-  const [uts, setUts] = useState(80);
-  const [tugas, setTugas] = useState(85);
-  const [wUts, setWUts] = useState(30);
-  const [wTugas, setWTugas] = useState(30);
-  const [wUas, setWUas] = useState(40);
+  const [target, setTarget] = usePersistentState("draft-nilai-minimal-target", 70);
+  const [uts, setUts] = usePersistentState("draft-nilai-minimal-uts", 80);
+  const [tugas, setTugas] = usePersistentState("draft-nilai-minimal-tugas", 85);
+  const [wUts, setWUts] = usePersistentState("draft-nilai-minimal-w-uts", 30);
+  const [wTugas, setWTugas] = usePersistentState("draft-nilai-minimal-w-tugas", 30);
+  const [wUas, setWUas] = usePersistentState("draft-nilai-minimal-w-uas", 40);
 
   const result = useMemo(() => {
     const totalW = wUts + wTugas + wUas;

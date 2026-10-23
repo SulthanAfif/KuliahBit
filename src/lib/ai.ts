@@ -101,10 +101,10 @@ Di akhir:
 
 Hanya dari materi yang diberi. Jangan mengarang.`,
 
-  parafrase: `Kamu membantu mahasiswa Indonesia merapikan tulisan akademik.
-Parafrase teks berikut agar lebih jelas dan formal, TANPA mengubah makna.
-Jangan menambah fakta baru. Jangan jadi plagiat-helper yang sekadar sinonim acak.
-Output: versi yang sudah diperbaiki saja, dalam bahasa Indonesia (kecuali istilah teknis tetap).`,
+  parafrase: `Kamu membantu mahasiswa Indonesia merapikan tulisan.
+Parafrase teks agar lebih jelas, TANPA mengubah makna.
+Jangan menambah fakta baru. Jangan hanya ganti sinonim acak.
+Output: teks hasil saja, bahasa Indonesia (istilah teknis boleh tetap).`,
 
   outline: `Kamu adalah perancang presentasi akademik yang membantu mahasiswa Indonesia.
 Buat isi presentasi yang bernas, spesifik, dan siap dipindahkan ke slide. Hindari isi generik seperti "poin penting", "contoh", atau "kesimpulan" tanpa menjelaskan maksudnya.
@@ -132,6 +132,39 @@ export async function generateAI(mode: AIMode, text: string): Promise<string> {
   return callGroq(system, user, mode === "outline" ? 4096 : 2048);
 }
 
+
+export type ParafraseStyle = "natural" | "kasual" | "formal";
+
+const PARAFRASE_STYLE: Record<ParafraseStyle, string> = {
+  natural: `Gaya NATURAL (prioritas):
+- Kurangi frasa klise AI seperti "penting untuk dicatat bahwa", "secara keseluruhan", "dalam era modern", "perlu digarisbawahi".
+- Kalimat lebih langsung, variasi panjang kalimat, hindari pola terlalu rapi/simetris.
+- Tetap jelas dan mudah dibaca mahasiswa. Jangan slang berlebihan.`,
+  kasual: `Gaya KASUAL kuliah:
+- Seperti menjelaskan ke teman sekelas: hangat, sederhana, tetap sopan.
+- Boleh "kamu"/nada santai ringan, hindari bahasa chat kasar.
+- Jangan terlalu kaku atau terkesan template.`,
+  formal: `Gaya FORMAL akademik:
+- Cocok laporan/makalah: baku, rapi, objektif.
+- Hindari kata gaul; tetap jangan kaku berlebihan atau frasa AI klise.`,
+};
+
+/** Parafrase dengan pilihan gaya tulis */
+export async function generateParafrase(
+  text: string,
+  style: ParafraseStyle = "natural"
+): Promise<string> {
+  const system = `${SYSTEM_PROMPTS.parafrase}
+
+${PARAFRASE_STYLE[style]}
+
+Aturan tambahan:
+- Pertahankan makna dan poin penting.
+- Jangan klaim ini untuk lolos deteksi AI/plagiasi.
+- Output hanya teks hasil, tanpa pembuka/penutup meta.`;
+  return callGroq(system, text.slice(0, 12000), 2048);
+}
+
 export async function generateCram(text: string, minutes: number): Promise<string> {
   const system = SYSTEM_PROMPTS.cram;
   const user = `Waktu tersedia: ${minutes} menit.\n\nMateri:\n\n${text.slice(0, 12000)}`;
@@ -150,4 +183,76 @@ export function parseFlashcards(raw: string): { front: string; back: string }[] 
     }
   }
   return cards;
+}
+
+/** Chat multi-turn: jawab HANYA dari materi konteks */
+export async function chatWithContext(
+  context: string,
+  messages: { role: "user" | "assistant"; content: string }[]
+): Promise<string> {
+  const apiKey = (import.meta.env.VITE_GROQ_API_KEY as string) || "";
+  if (!apiKey || apiKey === "your_key_here") throw new Error("NO_API_KEY");
+
+  const system = `Kamu asisten belajar mahasiswa Indonesia.
+Jawab HANYA berdasarkan materi konteks di bawah. Jika tidak ada di materi, katakan: "Tidak ditemukan di materi yang diberikan."
+Jangan mengarang di luar konteks. Bahasa jelas; boleh analogi sederhana jika diminta.
+--- MATERI ---
+${context.slice(0, 12000)}
+--- AKHIR MATERI ---`;
+
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "openai/gpt-oss-120b",
+      messages: [
+        { role: "system", content: system },
+        ...messages.map((m) => ({ role: m.role, content: m.content })),
+      ],
+      temperature: 0.3,
+      max_tokens: 1500,
+    }),
+  });
+  if (!res.ok) throw new Error(`Groq error ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content?.trim() || "Tidak ada respons.";
+}
+
+export async function explainTerm(context: string, term: string): Promise<string> {
+  return chatWithContext(context || "(tidak ada materi tambahan)", [
+    {
+      role: "user",
+      content: `Jelaskan istilah/konsep ini singkat untuk mahasiswa: "${term}".${
+        context.trim() ? " Utamakan arti sesuai materi konteks jika ada." : ""
+      }`,
+    },
+  ]);
+}
+
+export async function generateStudyQuestions(context: string): Promise<string> {
+  return callGroq(
+    `Dari materi berikut, buat 10 pertanyaan esai singkat self-test mahasiswa Indonesia.
+Format:
+1. [pertanyaan]
+2. ...
+Jangan tulis kunci jawaban.`,
+    context.slice(0, 10000),
+    1500
+  );
+}
+
+export async function gradeStudyAnswer(
+  context: string,
+  question: string,
+  answer: string
+): Promise<string> {
+  return callGroq(
+    `Kamu tutor. Nilai jawaban mahasiswa berdasarkan materi.
+Beri: skor 1-10, apa yang benar, apa yang kurang, kunci singkat. Bahasa Indonesia.`,
+    `Materi:\n${context.slice(0, 6000)}\n\nPertanyaan: ${question}\nJawaban mahasiswa: ${answer}`,
+    1024
+  );
 }

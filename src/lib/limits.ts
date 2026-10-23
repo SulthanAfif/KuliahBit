@@ -1,6 +1,6 @@
 import { getFromStorage, saveToStorage } from "./storage";
 
-/** Batas paket Free — Pro = unlimited */
+/** Kuota bulanan paket Free. */
 export const FREE_LIMITS = {
   aiPerMonth: 3,
   pdfUploadsPerMonth: 3,
@@ -10,8 +10,14 @@ export const FREE_LIMITS = {
   quizQuestions: 3,
   bankItems: 3,
   notes: 3,
-  pdfMaxMb: 5,
-  pdfMaxChars: 15000,
+  pdfMaxMb: 10,
+  pdfMaxChars: 30000,
+} as const;
+
+/** Pro menghapus kuota bulanan dan memberi batas PDF per file yang lebih besar. */
+export const PRO_LIMITS = {
+  pdfMaxMb: 20,
+  pdfMaxChars: 100000,
 } as const;
 
 const AI_USAGE_KEY = "ai-usage-monthly";
@@ -90,13 +96,14 @@ export function canAddQuizSet(isPro: boolean, count: number): boolean {
 
 /** Cek ukuran file PDF untuk free */
 export function canUploadPdf(isPro: boolean, fileSizeBytes: number): boolean {
-  const maxMb = isPro ? 10 : FREE_LIMITS.pdfMaxMb;
+  const maxMb = isPro ? PRO_LIMITS.pdfMaxMb : FREE_LIMITS.pdfMaxMb;
   return fileSizeBytes <= maxMb * 1024 * 1024;
 }
 
 export function clipPdfText(isPro: boolean, text: string): { text: string; clipped: boolean } {
-  if (isPro || text.length <= FREE_LIMITS.pdfMaxChars) {
+  const maxChars = isPro ? PRO_LIMITS.pdfMaxChars : FREE_LIMITS.pdfMaxChars;
+  if (text.length <= maxChars) {
     return { text, clipped: false };
   }
-  return { text: text.slice(0, FREE_LIMITS.pdfMaxChars), clipped: true };
+  return { text: text.slice(0, maxChars), clipped: true };
 }

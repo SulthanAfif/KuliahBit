@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Plus, Trash2, AlarmClock, CalendarDays } from "lucide-react";
-import { getFromStorage, saveToStorage } from "../lib/storage";
+import { getFromStorage, saveToStorage, usePersistentState } from "../lib/storage";
 import { v4 as uuid } from "uuid";
 import { format, differenceInDays, differenceInHours, isPast, isToday } from "date-fns";
 import { id as localeId } from "date-fns/locale";
@@ -52,12 +52,12 @@ function getCountdown(dateStr: string, timeStr?: string) {
 
 export default function Agenda() {
   const [items, setItems] = useState<AgendaItem[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
-  const [type, setType] = useState<AgendaItem["type"]>("deadline");
-  const [notes, setNotes] = useState("");
+  const [showForm, setShowForm] = usePersistentState("draft-agenda-open", false);
+  const [title, setTitle] = usePersistentState("draft-agenda-title", "");
+  const [date, setDate] = usePersistentState("draft-agenda-date", "");
+  const [time, setTime] = usePersistentState("draft-agenda-time", "");
+  const [type, setType] = usePersistentState<AgendaItem["type"]>("draft-agenda-type", "deadline");
+  const [notes, setNotes] = usePersistentState("draft-agenda-notes", "");
 
   useEffect(() => {
     setItems(getFromStorage("agenda-items", []));

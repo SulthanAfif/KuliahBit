@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { usePersistentState } from "../lib/storage";
 import { Zap, Loader2, AlertCircle } from "lucide-react";
 import { generateCram, hasAIKey } from "../lib/ai";
 import { canUseAi, incrementAiUsage, aiRemaining, FREE_LIMITS } from "../lib/limits";
@@ -9,9 +10,9 @@ import { Link, useNavigate } from "react-router-dom";
 export default function Cram() {
   const { isPro } = usePlan();
   const navigate = useNavigate();
-  const [text, setText] = useState("");
-  const [minutes, setMinutes] = useState(120);
-  const [result, setResult] = useState("");
+  const [text, setText] = usePersistentState("draft-cram-text", "");
+  const [minutes, setMinutes] = usePersistentState("draft-cram-minutes", 120);
+  const [result, setResult] = usePersistentState("draft-cram-result", "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const aiReady = hasAIKey();

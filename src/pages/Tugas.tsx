@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2, CheckCircle2, Circle, Clock } from "lucide-react";
-import { getFromStorage, saveToStorage } from "../lib/storage";
+import { getFromStorage, saveToStorage, usePersistentState } from "../lib/storage";
 import type { Task, Course } from "../types";
 import { v4 as uuid } from "uuid";
 import { format, isPast, isToday } from "date-fns";
@@ -9,11 +9,11 @@ import { id as localeId } from "date-fns/locale";
 export default function Tugas() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [showForm, setShowForm] = useState(false);
-  const [title, setTitle] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
-  const [courseId, setCourseId] = useState("");
+  const [showForm, setShowForm] = usePersistentState("draft-task-open", false);
+  const [title, setTitle] = usePersistentState("draft-task-title", "");
+  const [dueDate, setDueDate] = usePersistentState("draft-task-due-date", "");
+  const [priority, setPriority] = usePersistentState<"low" | "medium" | "high">("draft-task-priority", "medium");
+  const [courseId, setCourseId] = usePersistentState("draft-task-course", "");
   const [filter, setFilter] = useState<"all" | "todo" | "done">("all");
 
   useEffect(() => {

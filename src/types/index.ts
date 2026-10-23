@@ -22,6 +22,10 @@ export interface Flashcard {
   id: string;
   front: string;
   back: string;
+  ease?: number;
+  interval?: number;
+  repetitions?: number;
+  nextReview?: string;
 }
 
 export interface FlashcardSet {

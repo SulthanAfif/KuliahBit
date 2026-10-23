@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { FileText, CheckSquare, Square } from "lucide-react";
+import { usePersistentState } from "../lib/storage";
 
 const STRUCTURE = [
   { id: "cover", label: "Cover / Halaman judul" },
@@ -16,8 +17,8 @@ const STRUCTURE = [
 ];
 
 export default function Makalah() {
-  const [text, setText] = useState("");
-  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [text, setText] = usePersistentState("draft-makalah-text", "");
+  const [checked, setChecked] = usePersistentState<Record<string, boolean>>("draft-makalah-checks", {});
 
   const stats = useMemo(() => {
     const trimmed = text.trim();

@@ -123,7 +123,7 @@ export default function Dashboard() {
           <div>
             <h4 className="font-medium text-blue-900 dark:text-blue-100">Upgrade ke Pro</h4>
             <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-              AI unlimited, flashcard & kuis tanpa batas. Fokus tools, bukan sistem akademik kampus.
+              AI, flashcard, kuis, bank soal, dan catatan tanpa kuota bulanan, dengan impor PDF yang lebih besar.
             </p>
             <Link
               to="/pricing"

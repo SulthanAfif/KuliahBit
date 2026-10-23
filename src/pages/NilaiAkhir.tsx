@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
+import { usePersistentState } from "../lib/storage";
 import { Calculator, Plus, Trash2 } from "lucide-react";
 
 interface Component {
@@ -9,13 +10,13 @@ interface Component {
 }
 
 export default function NilaiAkhir() {
-  const [items, setItems] = useState<Component[]>([
+  const [items, setItems] = usePersistentState<Component[]>("draft-nilai-akhir-items", [
     { id: "1", name: "Tugas", weight: 30, score: 85 },
     { id: "2", name: "UTS", weight: 30, score: 78 },
     { id: "3", name: "UAS", weight: 40, score: 0 },
   ]);
-  const [target, setTarget] = useState(70);
-  const [focusId, setFocusId] = useState("3"); // komponen yang dihitung minimalnya
+  const [target, setTarget] = usePersistentState("draft-nilai-akhir-target", 70);
+  const [focusId, setFocusId] = usePersistentState("draft-nilai-akhir-focus", "3"); // komponen yang dihitung minimalnya
 
   const totalWeight = items.reduce((a, i) => a + i.weight, 0);
   const current = useMemo(() => {

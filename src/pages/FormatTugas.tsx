@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
+import { useMemo } from "react";
 import { FileCheck, CheckCircle2, AlertCircle, Circle } from "lucide-react";
+import { usePersistentState } from "../lib/storage";
 
 const STRUCTURE_CHECKS = [
   { id: "judul", label: "Ada judul / cover", test: (t: string) => /judul|cover|makalah|laporan/i.test(t.slice(0, 500)) || t.length > 100 },
@@ -22,7 +23,7 @@ function findUrlWithoutCite(text: string) {
 }
 
 export default function FormatTugas() {
-  const [text, setText] = useState("");
+  const [text, setText] = usePersistentState("draft-format-tugas", "");
 
   const report = useMemo(() => {
     if (!text.trim()) return null;

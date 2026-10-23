@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Briefcase, Download, Plus, Trash2, ImagePlus, Printer, Crown, Check } from "lucide-react";
-import { getFromStorage, saveToStorage } from "../lib/storage";
+import { getFromStorage, saveToStorage, usePersistentState } from "../lib/storage";
 import { usePlan } from "../context/PlanContext";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -53,7 +53,7 @@ export default function CVBuilder() {
   const { isPro } = usePlan();
   const navigate = useNavigate();
   const [data, setData] = useState<CVData>(() => ({ ...empty, ...getFromStorage("cv-data", empty) }));
-  const [templateId, setTemplateId] = useState<(typeof CV_TEMPLATES)[number]["id"]>("classic");
+  const [templateId, setTemplateId] = usePersistentState<(typeof CV_TEMPLATES)[number]["id"]>("draft-cv-template", "classic");
   const [photoError, setPhotoError] = useState("");
   const photoInputRef = useRef<HTMLInputElement>(null);
 
@@ -146,7 +146,7 @@ export default function CVBuilder() {
 
   return (
     <div className="w-full space-y-6">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Briefcase className="text-slate-600" size={26} />
@@ -159,7 +159,7 @@ export default function CVBuilder() {
             )}
           </p>
         </div>
-        <div className="flex shrink-0 flex-wrap gap-2 print:hidden">
+        <div className="flex w-full shrink-0 flex-wrap gap-2 print:hidden sm:w-auto">
           <button
             onClick={downloadTxt}
             className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2.5 rounded-xl text-sm hover:bg-slate-900"
@@ -365,10 +365,10 @@ export default function CVBuilder() {
 
       <Section title="Sertifikasi">
         {data.certifications.map((c, i) => (
-          <div key={i} className="mb-2 flex flex-wrap items-center gap-2">
-            <input placeholder="Nama sertifikasi" value={c.name} onChange={(ev) => { const items = [...data.certifications]; items[i] = { ...c, name: ev.target.value }; set("certifications", items); }} className="field min-w-[180px] flex-1" />
-            <input placeholder="Penerbit" value={c.issuer} onChange={(ev) => { const items = [...data.certifications]; items[i] = { ...c, issuer: ev.target.value }; set("certifications", items); }} className="field min-w-[150px] flex-1" />
-            <input placeholder="Tahun" value={c.year} onChange={(ev) => { const items = [...data.certifications]; items[i] = { ...c, year: ev.target.value }; set("certifications", items); }} className="field sm:w-28" />
+          <div key={i} className="mb-2 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_7rem_auto]">
+            <input placeholder="Nama sertifikasi" value={c.name} onChange={(ev) => { const items = [...data.certifications]; items[i] = { ...c, name: ev.target.value }; set("certifications", items); }} className="field min-w-0" />
+            <input placeholder="Penerbit" value={c.issuer} onChange={(ev) => { const items = [...data.certifications]; items[i] = { ...c, issuer: ev.target.value }; set("certifications", items); }} className="field min-w-0" />
+            <input placeholder="Tahun" value={c.year} onChange={(ev) => { const items = [...data.certifications]; items[i] = { ...c, year: ev.target.value }; set("certifications", items); }} className="field min-w-0" />
             {data.certifications.length > 1 && <button type="button" onClick={() => set("certifications", data.certifications.filter((_, j) => j !== i))} aria-label="Hapus sertifikasi" className="text-red-500"><Trash2 size={15} /></button>}
           </div>
         ))}
@@ -377,9 +377,9 @@ export default function CVBuilder() {
 
       <Section title="Bahasa">
         {data.languages.map((language, i) => (
-          <div key={i} className="mb-2 flex flex-wrap items-center gap-2">
-            <input placeholder="Bahasa (contoh: Inggris)" value={language.name} onChange={(ev) => { const items = [...data.languages]; items[i] = { ...language, name: ev.target.value }; set("languages", items); }} className="field min-w-[180px] flex-1" />
-            <input placeholder="Kemampuan (contoh: Menengah)" value={language.proficiency} onChange={(ev) => { const items = [...data.languages]; items[i] = { ...language, proficiency: ev.target.value }; set("languages", items); }} className="field min-w-[180px] flex-1" />
+          <div key={i} className="mb-2 grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+            <input placeholder="Bahasa (contoh: Inggris)" value={language.name} onChange={(ev) => { const items = [...data.languages]; items[i] = { ...language, name: ev.target.value }; set("languages", items); }} className="field min-w-0" />
+            <input placeholder="Kemampuan (contoh: Menengah)" value={language.proficiency} onChange={(ev) => { const items = [...data.languages]; items[i] = { ...language, proficiency: ev.target.value }; set("languages", items); }} className="field min-w-0" />
             {data.languages.length > 1 && <button type="button" onClick={() => set("languages", data.languages.filter((_, j) => j !== i))} aria-label="Hapus bahasa" className="text-red-500"><Trash2 size={15} /></button>}
           </div>
         ))}

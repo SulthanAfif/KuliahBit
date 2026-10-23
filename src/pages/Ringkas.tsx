@@ -10,9 +10,9 @@ import {
 } from "lucide-react";
 import { usePlan } from "../context/PlanContext";
 import { Link, useNavigate } from "react-router-dom";
-import { getFromStorage, saveToStorage } from "../lib/storage";
+import { getFromStorage, saveToStorage, usePersistentState } from "../lib/storage";
 import { generateAI, hasAIKey, parseFlashcards, type AIMode } from "../lib/ai";
-import { FREE_LIMITS, getAiUsageThisMonth, incrementAiUsage, canUseFeature, incrementFeatureUsage, getFeatureUsageThisMonth, canUploadPdf } from "../lib/limits";
+import { FREE_LIMITS, PRO_LIMITS, getAiUsageThisMonth, incrementAiUsage, canUseFeature, incrementFeatureUsage, getFeatureUsageThisMonth, canUploadPdf, clipPdfText } from "../lib/limits";
 import { extractTextFromPDF } from "../lib/pdf";
 import type { FlashcardSet } from "../types";
 import { v4 as uuid } from "uuid";
@@ -30,8 +30,8 @@ function renderInlineMarkdown(line: string) {
 export default function Ringkas() {
   const { isPro } = usePlan();
   const navigate = useNavigate();
-  const [text, setText] = useState("");
-  const [result, setResult] = useState("");
+  const [text, setText] = usePersistentState("draft-ringkas-text", "");
+  const [result, setResult] = usePersistentState("draft-ringkas-result", "");
   const [loading, setLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +61,7 @@ export default function Ringkas() {
         navigate("/pricing");
         return;
       }
-      setError("Ukuran PDF maksimal 10 MB.");
+      setError(`Ukuran PDF maksimal ${isPro ? PRO_LIMITS.pdfMaxMb : FREE_LIMITS.pdfMaxMb} MB.`);
       return;
     }
 
@@ -78,13 +78,13 @@ export default function Ringkas() {
         return;
       }
       // Limit text length for free users a bit
-      const limited = extracted.slice(0, isPro ? 50000 : 15000);
-      setText(limited);
+      const limited = clipPdfText(isPro, extracted);
+      setText(limited.text);
       setPdfName(file.name);
       if (!isPro) incrementFeatureUsage("pdfUploadsPerMonth");
-      if (!isPro && extracted.length > 15000) {
+      if (limited.clipped) {
         setError(
-          "Teks dipotong ke 15.000 karakter (batas free). Upgrade Pro untuk lebih panjang."
+          `Teks PDF dipotong ke ${(isPro ? PRO_LIMITS.pdfMaxChars : FREE_LIMITS.pdfMaxChars).toLocaleString("id-ID")} karakter sesuai batas paket.`
         );
       }
     } catch (err: any) {
@@ -171,6 +171,149 @@ export default function Ringkas() {
       for (let i = 0; i < cards.length; i++) incrementFeatureUsage("flashcardCardsTotal");
     }
     setSavedMsg(`${cards.length} kartu disimpan ke Flashcards!`);
+  };
+
+
+  /** Satu tombol: ringkas + flashcard + soal, simpan otomatis */
+  const handleGenerateAll = async () => {
+    if (!text.trim()) return;
+    if (!isPro && aiUsage + 3 > FREE_LIMITS.aiPerMonth) {
+      navigate("/pricing");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    setResult("");
+    setSavedMsg(null);
+    try {
+      let ringkasOut = "";
+      let flashOut = "";
+      let soalOut = "";
+      if (aiReady) {
+        ringkasOut = await generateAI("ringkas", text);
+        flashOut = await generateAI("flashcard", text);
+        soalOut = await generateAI("soal", text);
+        if (!isPro) {
+          incrementAiUsage();
+          incrementAiUsage();
+          incrementAiUsage();
+        }
+      } else {
+        await new Promise((r) => setTimeout(r, 800));
+        ringkasOut =
+          "📌 Ringkasan (demo):\n\n" +
+          text
+            .split(/[.!?]+/)
+            .filter((s) => s.trim().length > 20)
+            .slice(0, 4)
+            .map((s, i) => `${i + 1}. ${s.trim()}.`)
+            .join("\n\n");
+        flashOut =
+          "DEAPAN: Apa topik utama?\nBELAKANG: (dari materi)\n\nDEAPAN: Sebutkan satu poin penting\nBELAKANG: (dari materi)";
+        soalOut =
+          "1. Apa topik utama teks?\nA. Opsi A\nB. Opsi B\nC. Opsi C\nD. Opsi D\nJawaban: A";
+      }
+
+      setResult(
+        "=== RINGKASAN ===\n\n" +
+          ringkasOut +
+          "\n\n=== FLASHCARD ===\n\n" +
+          flashOut +
+          "\n\n=== SOAL LATIHAN ===\n\n" +
+          soalOut
+      );
+
+      const cards = parseFlashcards(flashOut);
+      let cardsSaved = 0;
+      if (cards.length > 0) {
+        const withinQuota = isPro || (
+          canUseFeature(isPro, "flashcardSets") &&
+          getFeatureUsageThisMonth("flashcardCardsTotal") + cards.length <= FREE_LIMITS.flashcardCardsTotal
+        );
+        if (withinQuota) {
+          const sets = getFromStorage<FlashcardSet[]>("flashcard-sets", []);
+          const titleBase = pdfName
+            ? pdfName.replace(/\.pdf$/i, "")
+            : `Materi ${new Date().toLocaleDateString("id-ID")}`;
+          const newSet: FlashcardSet = {
+            id: uuid(),
+            title: titleBase.slice(0, 60),
+            cards: cards.map((c) => ({ id: uuid(), front: c.front, back: c.back })),
+            createdAt: new Date().toISOString(),
+          };
+          saveToStorage("flashcard-sets", [newSet, ...sets]);
+          cardsSaved = cards.length;
+          if (!isPro) {
+            incrementFeatureUsage("flashcardSets");
+            for (let i = 0; i < cards.length; i++) incrementFeatureUsage("flashcardCardsTotal");
+          }
+        }
+      }
+
+      const quizSets = getFromStorage<
+        { id: string; title: string; questions: any[]; createdAt: string }[]
+      >("quiz-sets", []);
+      const questions: {
+        id: string;
+        question: string;
+        options: string[];
+        correctAnswer: number;
+      }[] = [];
+      const blocks = soalOut.split(/\n(?=\d+\.)/);
+      for (const block of blocks) {
+        const lines = block
+          .trim()
+          .split("\n")
+          .map((l) => l.trim())
+          .filter(Boolean);
+        if (lines.length < 5) continue;
+        const qLine = lines[0].replace(/^\d+\.\s*/, "");
+        const opts = lines.slice(1, 5).map((l) => l.replace(/^[A-D]\.\s*/i, ""));
+        const ansLine = lines.find((l) => /^Jawaban:/i.test(l)) || "";
+        const letter = (ansLine.match(/Jawaban:\s*([A-D])/i) || [])[1];
+        const correctAnswer = letter ? letter.toUpperCase().charCodeAt(0) - 65 : 0;
+        if (qLine && opts.length === 4) {
+          questions.push({
+            id: uuid(),
+            question: qLine,
+            options: opts,
+            correctAnswer: Math.min(3, Math.max(0, correctAnswer)),
+          });
+        }
+      }
+      let questionsSaved = 0;
+      if (questions.length > 0 && (isPro || (
+        canUseFeature(isPro, "quizSets") &&
+        getFeatureUsageThisMonth("quizQuestions") + questions.length <= FREE_LIMITS.quizQuestions
+      ))) {
+        const titleBase = pdfName
+          ? pdfName.replace(/\.pdf$/i, "")
+          : `Soal ${new Date().toLocaleDateString("id-ID")}`;
+        quizSets.unshift({
+          id: uuid(),
+          title: titleBase.slice(0, 60),
+          questions,
+          createdAt: new Date().toISOString(),
+        });
+        saveToStorage("quiz-sets", quizSets);
+        questionsSaved = questions.length;
+        if (!isPro) {
+          incrementFeatureUsage("quizSets");
+          for (let i = 0; i < questions.length; i++) incrementFeatureUsage("quizQuestions");
+        }
+      }
+
+      setSavedMsg(
+        `Selesai: ringkasan${cardsSaved ? ` + ${cardsSaved} flashcard` : ""}` +
+          (questionsSaved ? ` + ${questionsSaved} soal` : "") +
+          " (hasil yang memenuhi kuota tersimpan otomatis)"
+      );
+    } catch (e: any) {
+      if (e.message === "NO_API_KEY") setError("API key Groq belum diset.");
+      else setError(e.message || "Gagal generate.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -332,6 +475,20 @@ export default function Ringkas() {
               <Lock size={16} /> Batas tercapai
             </>
           )}
+        </button>
+
+        <button
+          onClick={handleGenerateAll}
+          disabled={loading || !text.trim() || !canUse}
+          className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium transition"
+          title="Ringkas + flashcard + soal sekaligus"
+        >
+          {loading ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (
+            <Sparkles size={16} />
+          )}
+          PDF/Teks → Semua
         </button>
 
         {mode === "flashcard" && result && (

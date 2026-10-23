@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Plus, Trash2, Play, ArrowLeft, CheckCircle, XCircle } from "lucide-react";
-import { getFromStorage, saveToStorage } from "../lib/storage";
+import { getFromStorage, saveToStorage, usePersistentState } from "../lib/storage";
 import type { QuizSet, QuizQuestion } from "../types";
 import { v4 as uuid } from "uuid";
 import { usePlan } from "../context/PlanContext";
@@ -12,10 +12,10 @@ export default function Quiz() {
   const navigate = useNavigate();
   const [sets, setSets] = useState<QuizSet[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [isCreating, setIsCreating] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const [question, setQuestion] = useState("");
-  const [options, setOptions] = useState(["", "", "", ""]);
+  const [isCreating, setIsCreating] = usePersistentState("draft-quiz-open", false);
+  const [newTitle, setNewTitle] = usePersistentState("draft-quiz-title", "");
+  const [question, setQuestion] = usePersistentState("draft-quiz-question", "");
+  const [options, setOptions] = usePersistentState("draft-quiz-options", ["", "", "", ""]);
   const [correct, setCorrect] = useState(0);
   const [quizMode, setQuizMode] = useState(false);
   const [idx, setIdx] = useState(0);
@@ -223,7 +223,7 @@ export default function Quiz() {
 
   return (
     <div className="w-full space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3">
           <button onClick={() => setSelectedId(null)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"><ArrowLeft size={20} /></button>
           <div>
@@ -232,7 +232,7 @@ export default function Quiz() {
           </div>
         </div>
         {current && current.questions.length > 0 && (
-          <button onClick={startQuiz} className="flex items-center gap-2 bg-green-600 text-white px-4 py-2.5 rounded-xl text-sm">
+          <button onClick={startQuiz} className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-sm text-white sm:w-auto">
             <Play size={18} /> Mulai Kuis
           </button>
         )}
