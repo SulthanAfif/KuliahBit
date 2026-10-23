@@ -5,7 +5,7 @@ import type { FlashcardSet, Flashcard } from "../types";
 import { v4 as uuid } from "uuid";
 import { usePlan } from "../context/PlanContext";
 import { Link, useNavigate } from "react-router-dom";
-import { FREE_LIMITS } from "../lib/limits";
+import { FREE_LIMITS, canAddFlashcardSet, canUseFeature, incrementFeatureUsage, getFeatureUsageThisMonth } from "../lib/limits";
 
 export default function Flashcards() {
   const { isPro } = usePlan();
@@ -34,7 +34,7 @@ export default function Flashcards() {
 
   const handleCreateSet = () => {
     if (!newTitle.trim()) return;
-    if (!isPro && sets.length >= FREE_LIMITS.flashcardSets) {
+    if (!canAddFlashcardSet(isPro, sets.length)) {
       navigate("/pricing");
       return;
     }
@@ -45,6 +45,7 @@ export default function Flashcards() {
       createdAt: new Date().toISOString(),
     };
     setSets([newSet, ...sets]);
+    if (!isPro) incrementFeatureUsage("flashcardSets");
     setNewTitle("");
     setIsCreating(false);
     setSelectedId(newSet.id);
@@ -52,7 +53,7 @@ export default function Flashcards() {
 
   const handleAddCard = () => {
     if (!selected || !front.trim() || !back.trim()) return;
-    if (!isPro && totalCards >= freeLimit) {
+    if (!canUseFeature(isPro, "flashcardCardsTotal")) {
       navigate("/pricing");
       return;
     }
@@ -62,6 +63,7 @@ export default function Flashcards() {
         s.id === selected.id ? { ...s, cards: [...s.cards, card] } : s
       )
     );
+    if (!isPro) incrementFeatureUsage("flashcardCardsTotal");
     setFront("");
     setBack("");
   };
@@ -147,11 +149,14 @@ export default function Flashcards() {
           <div>
             <h1 className="text-2xl font-bold">Flashcards</h1>
             <p className="text-sm text-gray-500 mt-1">
-              {isPro ? "Unlimited" : `Free: max 3 set / ${freeLimit} kartu`} • {totalCards} kartu
+              {isPro ? "Unlimited" : `Free: ${getFeatureUsageThisMonth("flashcardSets")}/${FREE_LIMITS.flashcardSets} set, ${getFeatureUsageThisMonth("flashcardCardsTotal")}/${freeLimit} kartu bulan ini`} • {totalCards} kartu
             </p>
           </div>
           <button
-            onClick={() => setIsCreating(true)}
+            onClick={() => {
+              if (!canAddFlashcardSet(isPro, sets.length)) { navigate("/pricing"); return; }
+              setIsCreating(true);
+            }}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 sm:w-auto"
           >
             <Plus size={18} /> Buat Set

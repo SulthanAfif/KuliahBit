@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Zap, Loader2, AlertCircle } from "lucide-react";
 import { generateCram, hasAIKey } from "../lib/ai";
-import { canUseAi, incrementAiUsage, aiRemaining } from "../lib/limits";
+import { canUseAi, incrementAiUsage, aiRemaining, FREE_LIMITS } from "../lib/limits";
 import { usePlan } from "../context/PlanContext";
 import { UpgradeCard } from "../components/ProGate";
 import { Link, useNavigate } from "react-router-dom";
@@ -28,7 +28,6 @@ export default function Cram() {
     try {
       if (aiReady) {
         setResult(await generateCram(text, minutes));
-        if (!isPro) incrementAiUsage();
       } else {
         await new Promise((r) => setTimeout(r, 800));
         const blocks = Math.max(3, Math.floor(minutes / 30));
@@ -40,6 +39,7 @@ export default function Cram() {
         out += `\n⚠️ Jangan lewatkan: konsep inti, rumus/definisi, contoh soal\n✅ Cek cepat: Bisakah jelaskan topik utama? Sebut 3 poin penting?`;
         setResult(out);
       }
+      if (!isPro) incrementAiUsage();
     } catch (e: any) {
       setError(e.message === "NO_API_KEY" ? "API key belum diset." : e.message);
     } finally {
@@ -60,7 +60,7 @@ export default function Cram() {
       </div>
 
       {!isPro && !canUseAi(isPro) && (
-        <UpgradeCard title="Kuota AI bulan ini habis" description="Paket Free: 5 generate/bulan. Pro = unlimited." />
+        <UpgradeCard title="Kuota AI bulan ini habis" description={`Paket Free: ${FREE_LIMITS.aiPerMonth} generate/bulan. Pro = unlimited.`} />
       )}
       {!isPro && canUseAi(isPro) && (
         <p className="text-xs text-gray-500">Sisa AI free bulan ini: {aiRemaining(isPro)}× · <Link to="/pricing" className="text-amber-600 hover:underline">Upgrade Pro</Link></p>

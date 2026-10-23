@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Mail, Copy, Check, Download } from "lucide-react";
+import { useRef, useState } from "react";
+import { Mail, Copy, Check, Download, Loader2, AlertCircle } from "lucide-react";
 
 type TemplateId = "izin_sakit" | "izin_keluarga" | "cuti" | "perpanjangan" | "nilai";
 
@@ -39,9 +39,7 @@ Demikian surat ini saya sampaikan. Atas pengertian Bapak/Ibu, saya ucapkan terim
 
 Hormat saya,
 
-
-${v.nama || "..."}
-${v.nim || ""}`,
+${v.nama || "Nama Anda"}${v.nim ? `\n${v.nim}` : ""}`,
   },
   {
     id: "izin_keluarga",
@@ -65,7 +63,8 @@ Saya ${v.nama || "..."} (NIM ${v.nim || "..."}, ${v.prodi || "..."}) memohon izi
 Atas perhatiannya, terima kasih.
 
 Hormat saya,
-${v.nama || "..."}`,
+
+${v.nama || "Nama Anda"}`,
   },
   {
     id: "cuti",
@@ -94,8 +93,8 @@ mengajukan permohonan cuti akademik pada semester ${v.semester || "..."} dengan 
 Demikian permohonan ini. Atas perhatian dan kebijakannya, saya ucapkan terima kasih.
 
 Hormat saya,
-${v.nama || "..."}
-${v.nim || ""}`,
+
+${v.nama || "Nama Anda"}${v.nim ? `\n${v.nim}` : ""}`,
   },
   {
     id: "perpanjangan",
@@ -120,7 +119,8 @@ Saya ${v.nama || "..."} (NIM ${v.nim || "..."}) memohon perpanjangan pengumpulan
 Atas pengertian Bapak/Ibu, terima kasih.
 
 Hormat saya,
-${v.nama || "..."}`,
+
+${v.nama || "Nama Anda"}`,
   },
   {
     id: "nilai",
@@ -143,7 +143,8 @@ Saya ${v.nama || "..."} (NIM ${v.nim || "..."}) memohon kesediaan Bapak/Ibu untu
 Saya siap melengkapi dokumen jika diperlukan. Terima kasih.
 
 Hormat saya,
-${v.nama || "..."}`,
+
+${v.nama || "Nama Anda"}`,
   },
 ];
 
@@ -152,7 +153,8 @@ export default function SuratKilat() {
   const [values, setValues] = useState<Record<string, string>>({});
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
-  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [error, setError] = useState("");
+  const previewRef = useRef<HTMLDivElement>(null);
 
   const current = TEMPLATES.find((t) => t.id === tpl)!;
   const text = current.build(values);
@@ -163,50 +165,27 @@ export default function SuratKilat() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const download = async () => {
+  const downloadPdf = async () => {
+    if (!previewRef.current) return;
     setDownloading(true);
-    setDownloadError(null);
-
-    const content = document.createElement("div");
-    content.textContent = text;
-    content.style.cssText = [
-      "font-family: 'Times New Roman', Times, serif",
-      "font-size: 12pt",
-      "line-height: 1.5",
-      "white-space: pre-wrap",
-      "overflow-wrap: anywhere",
-      "color: #111",
-      "background: #fff",
-      "width: 170mm",
-      "padding: 0",
-      "position: fixed",
-      "left: -10000px",
-      "top: 0",
-    ].join(";");
-    document.body.appendChild(content);
-
+    setError("");
     try {
-      const module = await import("html2pdf.js");
-      const html2pdf = (module as any).default || module;
+      const html2pdfModule = await import("html2pdf.js");
+      const html2pdf = (html2pdfModule as any).default || html2pdfModule;
       await html2pdf()
         .set({
-          margin: [15, 20, 15, 20],
+          margin: 0,
           filename: `surat-${tpl}.pdf`,
           image: { type: "jpeg", quality: 0.98 },
-          html2canvas: {
-            scale: 2,
-            backgroundColor: "#ffffff",
-            logging: false,
-          },
+          html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false },
           jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
           pagebreak: { mode: ["css", "legacy"] },
         })
-        .from(content)
+        .from(previewRef.current)
         .save();
-    } catch (error) {
-      setDownloadError(error instanceof Error ? error.message : "Gagal membuat PDF.");
+    } catch (e) {
+      setError(e instanceof Error ? `PDF gagal dibuat: ${e.message}` : "PDF gagal dibuat.");
     } finally {
-      content.remove();
       setDownloading(false);
     }
   };
@@ -219,7 +198,7 @@ export default function SuratKilat() {
           Surat Kilat
         </h1>
         <p className="text-sm text-gray-500 mt-1">
-          Template surat formal — isi, salin, atau unduh
+          Isi surat formal, lihat pratinjau A4, lalu unduh sebagai PDF
         </p>
       </div>
 
@@ -256,9 +235,15 @@ export default function SuratKilat() {
         ))}
       </div>
 
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-5 shadow-sm">
-        <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans">{text}</pre>
-        <div className="mt-4 flex flex-wrap gap-2">
+      <section className="rounded-2xl border border-gray-200 bg-gray-100 p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950 sm:p-6">
+        <div className="mx-auto mb-3 flex max-w-[794px] items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold">Pratinjau PDF · A4</h2>
+          <span className="text-xs text-gray-500">Tampilan sesuai file unduhan</span>
+        </div>
+        <div ref={previewRef} className="mx-auto min-h-[900px] max-w-[794px] bg-white px-10 py-14 text-gray-900 shadow-lg sm:min-h-[1123px] sm:px-[76px] sm:py-[72px]">
+          <pre className="whitespace-pre-wrap break-words font-serif text-[13px] leading-[1.9]">{text}</pre>
+        </div>
+        <div className="mx-auto mt-4 flex max-w-[794px] flex-wrap gap-2">
           <button
             onClick={copy}
             className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-blue-700"
@@ -267,15 +252,16 @@ export default function SuratKilat() {
             {copied ? "Disalin" : "Salin"}
           </button>
           <button
-            onClick={download}
+            onClick={() => void downloadPdf()}
             disabled={downloading}
-            className="flex items-center gap-2 border border-gray-200 dark:border-gray-700 px-4 py-2 rounded-xl text-sm"
+            className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm text-gray-800 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
           >
-            <Download size={16} /> {downloading ? "Menyiapkan PDF..." : "Unduh PDF"}
+            {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+            {downloading ? "Membuat PDF..." : "Unduh PDF"}
           </button>
         </div>
-        {downloadError && <p role="alert" className="mt-3 text-sm text-red-600">Gagal mengunduh PDF: {downloadError}</p>}
-      </div>
+        {error && <p role="alert" className="mx-auto mt-3 flex max-w-[794px] items-center gap-2 text-sm text-red-600"><AlertCircle size={16} />{error}</p>}
+      </section>
     </div>
   );
 }

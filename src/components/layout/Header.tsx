@@ -1,12 +1,28 @@
-import { Moon, Sun, Download, Crown, Menu } from "lucide-react";
+import { Moon, Sun, Download, Crown, Menu, RotateCcw } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
 import { usePlan } from "../../context/PlanContext";
 import { getFromStorage } from "../../lib/storage";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+
+const RESET_KEYS: Record<string, string[]> = {
+  "/tugas": ["tasks"],
+  "/agenda": ["agenda-items"],
+  "/flashcards": ["flashcard-sets"],
+  "/quiz": ["quiz-sets"],
+  "/notes": ["notes"],
+  "/absensi": ["attendance"],
+  "/cv": ["cv-data"],
+  "/citation": ["citations"],
+  "/bank-soal": ["bank-soal"],
+  "/jadwal": ["schedule-items"],
+  "/ipk": ["ipk-items"],
+  "/skripsi": ["skripsi-progress", "skripsi-judul"],
+};
 
 export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
   const { theme, toggleTheme } = useTheme();
   const { isPro } = usePlan();
+  const { pathname } = useLocation();
 
   const handleExport = () => {
     const data = {
@@ -28,6 +44,12 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
     a.download = `kuliahbit-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const handleReset = () => {
+    if (!window.confirm("Reset fitur ini? Data yang tersimpan di fitur ini akan dihapus.")) return;
+    (RESET_KEYS[pathname] || []).forEach((key) => localStorage.removeItem(key));
+    window.location.reload();
   };
 
   return (
@@ -64,6 +86,17 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
           <Download size={16} />
           <span className="hidden sm:inline">Export</span>
         </button>
+
+        {pathname !== "/dashboard" && pathname !== "/settings" && pathname !== "/pricing" && (
+          <button
+            onClick={handleReset}
+            className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-sm transition hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+            title="Reset fitur yang sedang dibuka"
+          >
+            <RotateCcw size={15} />
+            <span className="hidden sm:inline">Reset</span>
+          </button>
+        )}
 
         <button
           onClick={toggleTheme}

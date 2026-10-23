@@ -4,28 +4,28 @@ import { FREE_LIMITS } from "../lib/limits";
 
 const FREE_FEATURES = [
   { text: "Tugas, jadwal, agenda, absensi, prioritas", ok: true },
-  { text: "IPK & kalkulator nilai akhir", ok: true },
-  { text: `Flashcard max ${FREE_LIMITS.flashcardSets} set / ${FREE_LIMITS.flashcardCardsTotal} kartu`, ok: true },
-  { text: `Quiz max ${FREE_LIMITS.quizSets} set`, ok: true },
+  { text: "Kalkulator nilai akhir dan target UAS", ok: true },
+  { text: `Flashcard ${FREE_LIMITS.flashcardSets} set / ${FREE_LIMITS.flashcardCardsTotal} kartu per bulan`, ok: true },
+  { text: `Quiz ${FREE_LIMITS.quizSets} set / ${FREE_LIMITS.quizQuestions} soal per bulan`, ok: true },
   { text: `AI (ringkas, cram, outline, dll) ${FREE_LIMITS.aiPerMonth}×/bulan`, ok: true },
-  { text: `Bank soal/materi max ${FREE_LIMITS.bankItems} item`, ok: true },
-  { text: `Catatan max ${FREE_LIMITS.notes}`, ok: true },
-  { text: `PDF max ${FREE_LIMITS.pdfMaxMb} MB (teks terbatas)`, ok: true },
+  { text: `Bank soal/materi ${FREE_LIMITS.bankItems} item per bulan`, ok: true },
+  { text: `Catatan ${FREE_LIMITS.notes} catatan per bulan`, ok: true },
+  { text: `Upload PDF ${FREE_LIMITS.pdfUploadsPerMonth} kali/bulan · maks. ${FREE_LIMITS.pdfMaxMb} MB/file · ringkasan hingga ${FREE_LIMITS.pdfMaxChars.toLocaleString("id-ID")} karakter`, ok: true },
+  { text: "Slide: pilih template, preview, dan unduh PDF", ok: true },
   { text: "Surat kilat, konverter dasar, hitung kata", ok: true },
-  { text: "CV unduh teks", ok: true },
-  { text: "AI unlimited", ok: false },
-  { text: "PDF besar + presentasi .pptx unlimited", ok: false },
-  { text: "Bank & catatan unlimited", ok: false },
+  { text: "CV template Klasik, preview, dan cetak/simpan PDF", ok: true },
+  { text: "Surat Kilat dengan preview A4 dan unduh PDF", ok: true },
+  { text: "Template CV premium", ok: false },
+  { text: "Penggunaan AI dan alat belajar tanpa batas bulanan", ok: false },
+  { text: "Impor PDF tanpa batas bulanan", ok: false },
+  { text: "Bank soal, catatan, flashcard, dan kuis tanpa batas bulanan", ok: false },
 ];
 
 const PRO_FEATURES = [
-  "AI unlimited (ringkas, cram, parafrase, outline, slide)",
-  "Flashcard, quiz, bank, catatan unlimited",
-  `PDF lebih besar (tanpa potong ${FREE_LIMITS.pdfMaxChars} karakter)`,
-  "Generate & unduh presentasi .pptx",
-  "CV & portfolio siap kerja",
-  "Prioritas support fitur baru",
-  "Tanpa batas harian",
+  "AI tanpa batas bulanan: ringkas, cram, parafrase, outline, dan slide",
+  "Flashcard, kuis, bank soal, dan catatan tanpa batas bulanan",
+  `Impor PDF tanpa batas bulanan · maks. 10 MB/file · ringkasan hingga 50.000 karakter`,
+  "Semua template CV premium, dengan preview dan cetak/simpan PDF",
 ];
 
 export default function Pricing() {
@@ -39,7 +39,7 @@ export default function Pricing() {
           Free vs Pro
         </h1>
         <p className="text-sm text-gray-500 mt-2">
-          Free tetap lengkap untuk kuliah sehari-hari. Pro untuk AI & arsip tanpa batas.
+          Free mencakup alat utama dengan kuota bulanan. Pro membuka template CV premium dan menghapus batas penggunaan.
         </p>
         {isPro && (
           <p className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-3 py-1.5 rounded-full">
@@ -90,7 +90,6 @@ export default function Pricing() {
             Rp 25rb
             <span className="text-sm font-normal text-gray-400">/bulan</span>
           </p>
-          <p className="text-xs text-gray-500 mt-1">atau ~Rp 99rb / semester (contoh)</p>
           <ul className="mt-6 space-y-2.5">
             {PRO_FEATURES.map((f) => (
               <li key={f} className="flex items-start gap-2 text-sm">

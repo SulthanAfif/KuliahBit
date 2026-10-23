@@ -12,7 +12,7 @@ import { usePlan } from "../context/PlanContext";
 import { Link, useNavigate } from "react-router-dom";
 import { getFromStorage, saveToStorage } from "../lib/storage";
 import { generateAI, hasAIKey, parseFlashcards, type AIMode } from "../lib/ai";
-import { FREE_LIMITS, getAiUsageThisMonth, incrementAiUsage } from "../lib/limits";
+import { FREE_LIMITS, getAiUsageThisMonth, incrementAiUsage, canUseFeature, incrementFeatureUsage, getFeatureUsageThisMonth, canUploadPdf } from "../lib/limits";
 import { extractTextFromPDF } from "../lib/pdf";
 import type { FlashcardSet } from "../types";
 import { v4 as uuid } from "uuid";
@@ -48,11 +48,19 @@ export default function Ringkas() {
   const handlePDF = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!canUseFeature(isPro, "pdfUploadsPerMonth")) {
+      navigate("/pricing");
+      return;
+    }
     if (file.type !== "application/pdf") {
       setError("Hanya file PDF yang didukung.");
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
+    if (!canUploadPdf(isPro, file.size)) {
+      if (!isPro) {
+        navigate("/pricing");
+        return;
+      }
       setError("Ukuran PDF maksimal 10 MB.");
       return;
     }
@@ -73,6 +81,7 @@ export default function Ringkas() {
       const limited = extracted.slice(0, isPro ? 50000 : 15000);
       setText(limited);
       setPdfName(file.name);
+      if (!isPro) incrementFeatureUsage("pdfUploadsPerMonth");
       if (!isPro && extracted.length > 15000) {
         setError(
           "Teks dipotong ke 15.000 karakter (batas free). Upgrade Pro untuk lebih panjang."
@@ -126,7 +135,7 @@ export default function Ringkas() {
         }
       }
 
-      if (!isPro && aiReady) incrementAiUsage();
+      if (!isPro) incrementAiUsage();
     } catch (e: any) {
       if (e.message === "NO_API_KEY") {
         setError("API key Groq belum diset. Lihat README untuk cara setup.");
@@ -145,6 +154,10 @@ export default function Ringkas() {
       setError("Tidak bisa parse flashcard. Coba generate ulang.");
       return;
     }
+    if (!canUseFeature(isPro, "flashcardSets") || (!isPro && getFeatureUsageThisMonth("flashcardCardsTotal") + cards.length > FREE_LIMITS.flashcardCardsTotal)) {
+      navigate("/pricing");
+      return;
+    }
     const sets = getFromStorage<FlashcardSet[]>("flashcard-sets", []);
     const newSet: FlashcardSet = {
       id: uuid(),
@@ -153,6 +166,10 @@ export default function Ringkas() {
       createdAt: new Date().toISOString(),
     };
     saveToStorage("flashcard-sets", [newSet, ...sets]);
+    if (!isPro) {
+      incrementFeatureUsage("flashcardSets");
+      for (let i = 0; i < cards.length; i++) incrementFeatureUsage("flashcardCardsTotal");
+    }
     setSavedMsg(`${cards.length} kartu disimpan ke Flashcards!`);
   };
 
@@ -175,6 +192,7 @@ export default function Ringkas() {
           )}
         </p>
       </div>
+      {!isPro && <p className="text-xs text-gray-500">Upload PDF bulan ini: {getFeatureUsageThisMonth("pdfUploadsPerMonth")}/{FREE_LIMITS.pdfUploadsPerMonth}</p>}
 
       {!isPro && (
         <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 flex items-start gap-3 text-sm">

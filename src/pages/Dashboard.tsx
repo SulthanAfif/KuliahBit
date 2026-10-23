@@ -1,32 +1,23 @@
 import { Link } from "react-router-dom";
 import {
   CheckSquare,
+  UserCheck,
   Layers,
   HelpCircle,
   Sparkles,
-  BookOpen,
   FileText,
   Crown,
   TrendingUp,
   Calculator,
-  Calendar,
-  BookMarked,
   AlarmClock,
-  Flame,
-  UserCheck,
   FileOutput,
-  Target,
-  RefreshCw,
   Presentation,
-  ListOrdered,
   Zap,
+  BookMarked,
+  RefreshCw,
   Mail,
   Briefcase,
-  Search,
-  Archive,
-  FileCheck,
 } from "lucide-react";
-
 import { usePlan } from "../context/PlanContext";
 import { getFromStorage } from "../lib/storage";
 import { useMemo } from "react";
@@ -47,32 +38,21 @@ export default function Dashboard() {
   }, []);
 
   const menus = [
-    { title: "Tugas & Deadline", desc: "Kelola tugas kuliah dan deadline", icon: CheckSquare, path: "/tugas", color: "from-blue-500 to-blue-600" },
-    { title: "Prioritas Malam Ini", desc: "Urutan tugas paling gawat", icon: ListOrdered, path: "/prioritas", color: "from-amber-400 to-amber-500" },
-    { title: "Jadwal Kuliah", desc: "Jadwal mingguan visual", icon: Calendar, path: "/jadwal", color: "from-indigo-500 to-indigo-600" },
-    { title: "Agenda & Countdown", desc: "UTS, UAS, deadline penting", icon: AlarmClock, path: "/agenda", color: "from-orange-500 to-orange-600" },
-    { title: "Cari Materi", desc: "Cari di catatan & PDF", icon: Search, path: "/cari", color: "from-blue-500 to-blue-600" },
-    { title: "Bank Soal & Materi", desc: "Arsip per matkul & topik", icon: Archive, path: "/bank", color: "from-orange-500 to-orange-600" },
-    { title: "Nilai Akhir", desc: "Bobot tugas/UTS/UAS + minimal", icon: Calculator, path: "/nilai-akhir", color: "from-cyan-500 to-blue-500" },
-    { title: "Flashcards", desc: "Buat & pelajari kartu hafalan", icon: Layers, path: "/flashcards", color: "from-violet-500 to-violet-600" },
-    { title: "Quiz", desc: "Latihan soal pilihan ganda", icon: HelpCircle, path: "/quiz", color: "from-green-500 to-green-600" },
-    { title: "Ringkas AI", desc: aiReady ? "AI real (Groq) aktif" : "Ringkas materi & generate soal", icon: Sparkles, path: "/ringkas", color: "from-purple-500 to-purple-600" },
-    { title: "Mode Cram", desc: "Rencana belajar sisa beberapa jam", icon: Zap, path: "/cram", color: "from-yellow-400 to-yellow-500" },
-    { title: "Kalkulator IPK", desc: "Hitung IPK + prediksi target", icon: Calculator, path: "/ipk", color: "from-cyan-500 to-cyan-600" },
-    { title: "Nilai Minimal UAS", desc: "Bobot tugas, UTS, UAS → target", icon: Target, path: "/nilai-minimal", color: "from-cyan-400 to-cyan-500" },
-    { title: "Cek Format Tugas", desc: "Struktur, sitasi, daftar pustaka", icon: FileCheck, path: "/format-tugas", color: "from-emerald-600 to-emerald-700" },
-    { title: "Surat Kilat", desc: "Izin, cuti, perpanjang tugas", icon: Mail, path: "/surat", color: "from-blue-400 to-blue-500" },
-    { title: "CV & Portofolio", desc: "Susun CV siap kerja", icon: Briefcase, path: "/cv", color: "from-slate-600 to-slate-700" },
-    { title: "Buat Presentasi", desc: "Edit slide + unduh file .pptx", icon: Presentation, path: "/slides", color: "from-rose-500 to-rose-600" },
-    { title: "Outline Slide", desc: "Kerangka PowerPoint dari materi", icon: Presentation, path: "/outline", color: "from-pink-400 to-pink-500" },
-    { title: "Parafrase", desc: "Rapikan kalimat (bukan plagiat)", icon: RefreshCw, path: "/parafrase", color: "from-indigo-400 to-indigo-500" },
-    { title: "Helper Makalah", desc: "Hitung kata + checklist struktur", icon: FileText, path: "/makalah", color: "from-sky-500 to-sky-600" },
-    { title: "Konverter File", desc: "PDF, Word, CSV, Excel", icon: FileOutput, path: "/converter", color: "from-violet-500 to-violet-600" },
+    { title: "Tugas", desc: "Deadline & checklist tugas", icon: CheckSquare,
+  UserCheck, path: "/tugas", color: "from-blue-500 to-blue-600" },
+    { title: "Deadline", desc: "Countdown UTS / pengumpulan", icon: AlarmClock, path: "/agenda", color: "from-orange-500 to-orange-600" },
+    { title: "Flashcards", desc: "Hafalan kartu", icon: Layers, path: "/flashcards", color: "from-violet-500 to-violet-600" },
+    { title: "Kuis", desc: "Latihan soal", icon: HelpCircle, path: "/quiz", color: "from-green-500 to-green-600" },
+    { title: "Ringkas AI", desc: aiReady ? "AI aktif" : "Ringkas materi / PDF", icon: Sparkles, path: "/ringkas", color: "from-purple-500 to-purple-600" },
+    { title: "Mode Cram", desc: "Rencana belajar kilat", icon: Zap, path: "/cram", color: "from-yellow-500 to-amber-500" },
+    { title: "Catatan", desc: "Catatan cepat", icon: FileText, path: "/notes", color: "from-pink-500 to-pink-600" },
+    { title: "Konverter", desc: "PDF, Word, CSV, Excel", icon: FileOutput, path: "/converter", color: "from-violet-500 to-indigo-600" },
+    { title: "Hitung Nilai", desc: "Bobot tugas / UTS / UAS", icon: Calculator, path: "/nilai-akhir", color: "from-cyan-500 to-cyan-600" },
+    { title: "Slide PPT", desc: "Buat & unduh .pptx", icon: Presentation, path: "/slides", color: "from-rose-500 to-rose-600" },
+    { title: "CV", desc: "Susun CV magang/kerja", icon: Briefcase, path: "/cv", color: "from-slate-500 to-slate-700" },
+    { title: "Surat Kilat", desc: "Template izin & permohonan", icon: Mail, path: "/surat", color: "from-blue-400 to-blue-500" },
+    { title: "Parafrase", desc: "Rapikan kalimat", icon: RefreshCw, path: "/parafrase", color: "from-indigo-400 to-indigo-500" },
     { title: "Daftar Pustaka", desc: "APA, MLA, Chicago, Harvard", icon: BookMarked, path: "/citation", color: "from-teal-500 to-teal-600" },
-    { title: "Study Streak", desc: "Kebiasaan belajar + streak harian", icon: Flame, path: "/habit", color: "from-orange-400 to-orange-500" },
-    { title: "Absensi", desc: "Tracker kehadiran min 75%", icon: UserCheck, path: "/absensi", color: "from-emerald-500 to-emerald-600" },
-    { title: "Skripsi", desc: "Tracker progress skripsi", icon: BookOpen, path: "/skripsi", color: "from-amber-500 to-amber-600" },
-    { title: "Catatan", desc: "Catatan cepat + pencarian", icon: FileText, path: "/notes", color: "from-pink-500 to-pink-600" },
   ];
 
 
@@ -83,7 +63,7 @@ export default function Dashboard() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Selamat datang di KuliahBit — tools lengkap buat mahasiswa
+            Tools belajar & tugas — bukan portal kampus
           </p>
         </div>
         {!isPro && (
@@ -143,7 +123,7 @@ export default function Dashboard() {
           <div>
             <h4 className="font-medium text-blue-900 dark:text-blue-100">Upgrade ke Pro</h4>
             <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-              Unlimited AI, tanpa batas flashcard & quiz, cloud sync, dan fitur advanced lainnya.
+              AI unlimited, flashcard & kuis tanpa batas. Fokus tools, bukan sistem akademik kampus.
             </p>
             <Link
               to="/pricing"

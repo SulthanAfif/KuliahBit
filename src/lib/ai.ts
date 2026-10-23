@@ -23,7 +23,7 @@ export function hasAIKey(): boolean {
   return !!getApiKey();
 }
 
-async function callGroq(system: string, user: string): Promise<string> {
+async function callGroq(system: string, user: string, maxTokens = 2048): Promise<string> {
   const apiKey = getApiKey();
   if (!apiKey) {
     throw new Error("NO_API_KEY");
@@ -42,7 +42,7 @@ async function callGroq(system: string, user: string): Promise<string> {
         { role: "user", content: user },
       ],
       temperature: 0.4,
-      max_tokens: 2048,
+      max_tokens: maxTokens,
     }),
   });
 
@@ -106,29 +106,36 @@ Parafrase teks berikut agar lebih jelas dan formal, TANPA mengubah makna.
 Jangan menambah fakta baru. Jangan jadi plagiat-helper yang sekadar sinonim acak.
 Output: versi yang sudah diperbaiki saja, dalam bahasa Indonesia (kecuali istilah teknis tetap).`,
 
-  outline: `Kamu membantu mahasiswa Indonesia membuat outline presentasi / PowerPoint.
-Dari materi berikut, buat outline slide dalam bahasa Indonesia.
-Format:
+  outline: `Kamu adalah perancang presentasi akademik yang membantu mahasiswa Indonesia.
+Buat isi presentasi yang bernas, spesifik, dan siap dipindahkan ke slide. Hindari isi generik seperti "poin penting", "contoh", atau "kesimpulan" tanpa menjelaskan maksudnya.
+Gunakan materi yang diberikan sebagai sumber utama. Kembangkan penjelasan agar mudah dipahami, tetapi jangan mengarang data, kutipan, atau fakta. Jika materi terlalu tipis, buat presentasi lebih singkat dan tandai bagian yang perlu dilengkapi.
 
-Slide 1: Judul
-- poin
+Buat 8�12 slide sesuai banyaknya materi. Sertakan alur yang masuk akal: judul dan konteks, tujuan/pertanyaan utama, konsep atau pembahasan bertahap, contoh atau penerapan yang memang didukung materi, lalu kesimpulan. Tambahkan definisi istilah penting bila relevan.
+Setiap slide pembahasan berisi 3�5 poin informatif. Tiap poin harus menyampaikan satu gagasan yang jelas (umumnya 1 kalimat), termasuk penjelasan, alasan, hubungan sebab-akibat, atau contoh spesifik dari materi. Hindari mengulang poin antarslide. Slide judul dan penutup boleh lebih ringkas.
 
-Slide 2: ...
-- poin
+Ikuti format ini persis agar bisa dibaca aplikasi:
+Slide 1: Judul yang spesifik
+- Konteks atau pengantar yang menjelaskan topik
+- Tujuan presentasi
 
-Maksimal 10 slide. Padat, cocok dibacakan 5–10 menit.`,
+Slide 2: Judul bagian
+- Gagasan lengkap dan spesifik
+- Penjelasan atau bukti dari materi
+- Contoh atau dampak yang relevan
+
+Gunakan bahasa Indonesia yang jelas dan cocok untuk presentasi sekitar 8�12 menit. Keluarkan isi slide saja, tanpa pengantar atau catatan di luar format.`,
 };
 
 export async function generateAI(mode: AIMode, text: string): Promise<string> {
   const system = SYSTEM_PROMPTS[mode];
   const user = `Materi:\n\n${text.slice(0, 12000)}`;
-  return callGroq(system, user);
+  return callGroq(system, user, mode === "outline" ? 4096 : 2048);
 }
 
 export async function generateCram(text: string, minutes: number): Promise<string> {
   const system = SYSTEM_PROMPTS.cram;
   const user = `Waktu tersedia: ${minutes} menit.\n\nMateri:\n\n${text.slice(0, 12000)}`;
-  return callGroq(system, user);
+  return callGroq(system, user, 2048);
 }
 
 export function parseFlashcards(raw: string): { front: string; back: string }[] {

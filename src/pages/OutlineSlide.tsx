@@ -27,13 +27,13 @@ export default function OutlineSlide() {
     try {
       if (aiReady) {
         setResult(await generateAI("outline", text));
-        if (!isPro) incrementAiUsage();
       } else {
         await new Promise((r) => setTimeout(r, 600));
         setResult(
           `Slide 1: Judul / Topik utama\n- (dari materi)\n\nSlide 2: Latar belakang\n- poin 1\n- poin 2\n\nSlide 3: Konsep inti\n- ...\n\nSlide 4: Contoh / aplikasi\n- ...\n\nSlide 5: Kesimpulan\n- ...\n\n(Mode demo — aktifkan Groq API untuk outline dari materi asli)`
         );
       }
+      if (!isPro) incrementAiUsage();
     } catch (e: any) {
       setError(e.message === "NO_API_KEY" ? "API key belum diset." : e.message);
     } finally {

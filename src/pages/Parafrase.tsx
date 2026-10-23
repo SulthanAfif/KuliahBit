@@ -27,7 +27,6 @@ export default function Parafrase() {
     try {
       if (aiReady) {
         setResult(await generateAI("parafrase", text));
-        if (!isPro) incrementAiUsage();
       } else {
         await new Promise((r) => setTimeout(r, 500));
         setResult(
@@ -35,6 +34,7 @@ export default function Parafrase() {
             "\n\n(Mode demo — aktifkan Groq API untuk parafrase otomatis. Gunakan untuk merapikan kalimat, bukan menyalin karya orang lain.)"
         );
       }
+      if (!isPro) incrementAiUsage();
     } catch (e: any) {
       setError(e.message === "NO_API_KEY" ? "API key belum diset." : e.message);
     } finally {

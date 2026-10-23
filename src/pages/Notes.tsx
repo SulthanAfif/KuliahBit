@@ -5,7 +5,7 @@ import type { Note } from "../types";
 import { v4 as uuid } from "uuid";
 import { Link, useNavigate } from "react-router-dom";
 import { usePlan } from "../context/PlanContext";
-import { canAddNote } from "../lib/limits";
+import { canAddNote, incrementFeatureUsage, getFeatureUsageThisMonth, FREE_LIMITS } from "../lib/limits";
 
 export default function Notes() {
   const { isPro } = usePlan();
@@ -45,6 +45,7 @@ export default function Notes() {
       updatedAt: new Date().toISOString(),
     };
     setNotes([note, ...notes]);
+    if (!isPro) incrementFeatureUsage("notes");
     setSelectedId(note.id);
     setIsCreating(false);
     setIsEditing(false);
@@ -90,6 +91,7 @@ export default function Notes() {
           <Download size={14}/> <span className="hidden sm:inline">Export catatan</span><span className="sm:hidden">Export</span>
         </button>
       </div>
+      {!isPro && <p className="-mt-2 text-xs text-gray-500">Catatan bulan ini: {getFeatureUsageThisMonth("notes")}/{FREE_LIMITS.notes}</p>}
       <div className="flex min-h-0 flex-1 flex-col gap-4 md:flex-row">
       <div className="flex max-h-[38vh] w-full shrink-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 md:max-h-none md:w-72">
         <div className="flex gap-2 border-b border-gray-200 p-3 dark:border-gray-800">
@@ -101,6 +103,7 @@ export default function Notes() {
           />
           <button
             onClick={() => {
+              if (!canAddNote(isPro, notes.length)) { navigate("/pricing"); return; }
               setIsCreating(true);
               setSelectedId(null);
               setTitle("");

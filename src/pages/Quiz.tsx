@@ -5,7 +5,7 @@ import type { QuizSet, QuizQuestion } from "../types";
 import { v4 as uuid } from "uuid";
 import { usePlan } from "../context/PlanContext";
 import { Link, useNavigate } from "react-router-dom";
-import { FREE_LIMITS } from "../lib/limits";
+import { FREE_LIMITS, canUseFeature, incrementFeatureUsage, getFeatureUsageThisMonth } from "../lib/limits";
 
 export default function Quiz() {
   const { isPro } = usePlan();
@@ -32,16 +32,15 @@ export default function Quiz() {
   }, [sets]);
 
   const current = sets.find((s) => s.id === selectedId);
-  const totalQ = sets.reduce((a, s) => a + s.questions.length, 0);
-
   const handleCreate = () => {
     if (!newTitle.trim()) return;
-    if (!isPro && sets.length >= FREE_LIMITS.quizSets) {
+    if (!canUseFeature(isPro, "quizSets")) {
       navigate("/pricing");
       return;
     }
     const s: QuizSet = { id: uuid(), title: newTitle.trim(), questions: [], createdAt: new Date().toISOString() };
     setSets([s, ...sets]);
+    if (!isPro) incrementFeatureUsage("quizSets");
     setNewTitle("");
     setIsCreating(false);
     setSelectedId(s.id);
@@ -49,7 +48,7 @@ export default function Quiz() {
 
   const handleAddQ = () => {
     if (!current || !question.trim() || options.some((o) => !o.trim())) return;
-    if (!isPro && totalQ >= FREE_LIMITS.quizSets) {
+    if (!canUseFeature(isPro, "quizQuestions")) {
       navigate("/pricing");
       return;
     }
@@ -60,6 +59,7 @@ export default function Quiz() {
       correctAnswer: correct,
     };
     setSets(sets.map((s) => (s.id === current.id ? { ...s, questions: [...s.questions, q] } : s)));
+    if (!isPro) incrementFeatureUsage("quizQuestions");
     setQuestion("");
     setOptions(["", "", "", ""]);
     setCorrect(0);
@@ -177,10 +177,10 @@ export default function Quiz() {
           <div>
             <h1 className="text-2xl font-bold">Quiz</h1>
             <p className="text-sm text-gray-500 mt-1">
-              {isPro ? "Unlimited" : `Free: max ${FREE_LIMITS.quizSets} kuis / ${FREE_LIMITS.quizSets} soal`}
+              {isPro ? "Unlimited" : `Free bulan ini: ${getFeatureUsageThisMonth("quizSets")}/${FREE_LIMITS.quizSets} kuis · ${getFeatureUsageThisMonth("quizQuestions")}/${FREE_LIMITS.quizQuestions} soal`}
             </p>
           </div>
-          <button onClick={() => setIsCreating(true)} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm">
+          <button onClick={() => { if (!canUseFeature(isPro, "quizSets")) { navigate("/pricing"); return; } setIsCreating(true); }} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-xl text-sm">
             <Plus size={18} /> Buat Kuis
           </button>
         </div>

@@ -3,7 +3,7 @@ import { Library, Plus, Trash2, Search } from "lucide-react";
 import { getFromStorage, saveToStorage } from "../lib/storage";
 import { v4 as uuid } from "uuid";
 import { usePlan } from "../context/PlanContext";
-import { canAddBankItem, FREE_LIMITS } from "../lib/limits";
+import { canAddBankItem, FREE_LIMITS, incrementFeatureUsage, getFeatureUsageThisMonth } from "../lib/limits";
 import { UpgradeCard } from "../components/ProGate";
 import { useNavigate } from "react-router-dom";
 
@@ -75,6 +75,7 @@ export default function BankSoal() {
       },
       ...items,
     ]);
+    if (!isPro) incrementFeatureUsage("bankItems");
     setTitle("");
     setCourse("");
     setTopic("");
@@ -84,8 +85,8 @@ export default function BankSoal() {
 
   return (
     <div className="w-full space-y-6">
-      {!isPro && items.length >= FREE_LIMITS.bankItems && (
-        <UpgradeCard title="Batas bank Free" description={`Maksimal ${FREE_LIMITS.bankItems} soal/materi di paket Free.`} />
+      {!isPro && getFeatureUsageThisMonth("bankItems") >= FREE_LIMITS.bankItems && (
+        <UpgradeCard title="Kuota bank bulan ini habis" description={`Paket Free: ${FREE_LIMITS.bankItems} soal/materi per bulan. Pro = unlimited.`} />
       )}
       <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
         <div>
@@ -98,7 +99,10 @@ export default function BankSoal() {
           </p>
         </div>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            if (!showForm && !canAddBankItem(isPro, items.length)) { navigate("/pricing"); return; }
+            setShowForm(!showForm);
+          }}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm text-white hover:bg-emerald-700 sm:w-auto"
         >
           <Plus size={16} /> Tambah
