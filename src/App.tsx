@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import Sidebar from "./components/layout/Sidebar";
 import Header from "./components/layout/Header";
 import Landing from "./pages/Landing";
@@ -25,6 +25,7 @@ import BeasiswaTracker from "./pages/BeasiswaTracker";
 import LaporanPraktikum from "./pages/LaporanPraktikum";
 import UjianMingguIni from "./pages/UjianMingguIni";
 import AdminPayments from "./pages/AdminPayments";
+import { trackAnalytics } from "./lib/analytics";
 
 function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -60,9 +61,38 @@ function AppShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+function AnalyticsTracker() {
+  const { pathname } = useLocation();
+  const lastTrackedPath = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (pathname === "/admin/pembayaran" || lastTrackedPath.current === pathname) return;
+    lastTrackedPath.current = pathname;
+    void trackAnalytics("page_view", pathname).catch((error: unknown) => {
+      console.warn("Could not record analytics page view.", error);
+    });
+  }, [pathname]);
+
+  useEffect(() => {
+    const onClick = (event: MouseEvent) => {
+      if (pathname === "/admin/pembayaran") return;
+      const target = event.target;
+      if (!(target instanceof Element) || !target.closest("a, button, [role='button']")) return;
+      void trackAnalytics("interaction", pathname).catch((error: unknown) => {
+        console.warn("Could not record analytics interaction.", error);
+      });
+    };
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
+  }, [pathname]);
+
+  return null;
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <AnalyticsTracker />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/dashboard" element={<AppShell><Dashboard /></AppShell>} />

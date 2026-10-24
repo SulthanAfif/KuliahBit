@@ -126,19 +126,20 @@ Ketika kuota tercapai, aksi yang dibatasi mengarahkan pengguna ke halaman `/pric
 
 ### Menyiapkan pembayaran DOKU
 
-1. Buat proyek Supabase dan jalankan migration `supabase/migrations/202610240001_doku_billing.sql` dan `supabase/migrations/202610240002_pro_feedback.sql` melalui SQL Editor.
+1. Buat proyek Supabase dan jalankan migration `supabase/migrations/202610240001_doku_billing.sql`, `supabase/migrations/202610240002_pro_feedback.sql`, `supabase/migrations/202610240003_usage_analytics.sql`, dan `supabase/migrations/202610240004_feedback_student_details.sql` melalui SQL Editor.
 2. Tambahkan `DOKU_CLIENT_ID`, `DOKU_SECRET_KEY`, `DOKU_ENV`, `APP_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, dan `ADMIN_DASHBOARD_TOKEN` sebagai environment variables di Vercel. Gunakan `DOKU_ENV=sandbox` saat uji coba dan `production` setelah kredensial live siap. Buat token admin acak minimal 32 karakter heksadesimal (contoh pembuatannya ada di `.env.example`). Service role key, token admin, dan secret DOKU hanya boleh disimpan sebagai secret server; jangan gunakan prefix `VITE_`.
 3. Arahkan DOKU HTTP Notification ke `https://<domain-aplikasi>/api/doku-notification` untuk kanal pembayaran yang diaktifkan di dashboard DOKU.
 4. Untuk menjalankan fungsi server lokal, gunakan `vercel dev` setelah mengisi environment variables lokal dari `.env.example`. `APP_URL` harus menunjuk origin yang dipakai membuka aplikasi.
 
 Email diminta pada checkout untuk diteruskan ke DOKU. Status Pro tersimpan pada cookie browser HttpOnly; menghapus cookie atau berpindah browser memutus akses ke status langganan itu karena aplikasi belum memiliki login/akun. Pembayaran berikutnya harus dimulai manual untuk memperpanjang masa aktif.
 
-Halaman pemantauan admin tersedia di `/admin/pembayaran`. Masukkan `ADMIN_DASHBOARD_TOKEN` untuk login; server mengirim token sebagai cookie HttpOnly berumur 8 jam. Selama cookie admin valid, admin juga mendapat akses fitur Pro pada browser tersebut. Akses ini hanya untuk gerbang fitur di client, bukan otorisasi server untuk data atau endpoint berbayar. Endpoint admin membaca invoice serta tabel ulasan/dukungan langsung dari database dan tidak membuka tabel Supabase ke browser. Daftar ulasan/dukungan diperbarui otomatis setiap 15 detik selama dashboard admin terbuka. Pengguna dengan langganan Pro aktif dapat mengirim ulasan atau pertanyaan dari bagian Ulasan dan dukungan Pro di halaman `/pricing`; identitas email diambil dari transaksi berbayar dan pesan muncul di tabel dashboard admin.
+Halaman pemantauan admin tersedia di `/admin/pembayaran`. Masukkan `ADMIN_DASHBOARD_TOKEN` untuk login; server mengirim token sebagai cookie HttpOnly berumur 8 jam. Selama cookie admin valid, admin juga mendapat akses fitur Pro pada browser tersebut. Akses ini hanya untuk gerbang fitur di client, bukan otorisasi server untuk data atau endpoint berbayar. Dashboard admin menampilkan grafik kunjungan halaman dan klik tombol/tautan selama 30 hari terakhir; data analitik diperbarui otomatis setiap menit. Jalankan migration `202610240003_usage_analytics.sql` agar tabel dan ringkasan analitik tersedia. Endpoint admin membaca invoice serta tabel ulasan/dukungan langsung dari database dan tidak membuka tabel Supabase ke browser. Pengguna Pro mengisi asal kampus dan semester saat mengirim ulasan atau dukungan melalui halaman `/pricing`; data tersebut ditampilkan bersama pesan di dashboard admin. Jalankan migration `202610240004_feedback_student_details.sql` untuk menambahkan kolom asal kampus dan semester. Daftar ulasan/dukungan diperbarui otomatis setiap 15 detik selama dashboard admin terbuka.
 
 ## Penyimpanan dan privasi
 
 - Data tugas, materi, tema, paket demo, dan penggunaan AI disimpan pada `localStorage` browser.
 - Data tidak tersinkron otomatis antarperangkat dan dapat hilang ketika data situs/browser dibersihkan.
+- Analitik mencatat jumlah kunjungan halaman dan interaksi tombol/tautan, tanpa menyimpan identitas pengunjung atau teks tombol. Data agregat ditampilkan di dashboard admin.
 - Pemanggilan AI mengirim teks yang dimasukkan pengguna ke Groq jika API key tersedia.
 - File PDF diproses di browser untuk mengekstrak teks; sebagian teks dapat dikirim ke Groq saat pengguna menjalankan fitur AI.
 - Gunakan halaman Pengaturan untuk impor atau menghapus data. Ekspor data lengkap belum tersedia.

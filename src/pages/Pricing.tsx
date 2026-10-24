@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Crown, MessageSquareText, Send, X } from "lucide-react";
+import { Check, Crown, MessageSquareText, Send, Star, X } from "lucide-react";
 import { usePlan } from "../context/PlanContext";
 import { FREE_LIMITS, PRO_LIMITS } from "../lib/limits";
 
@@ -27,6 +27,14 @@ const PRO_FEATURES = [
   "Langganan Pro berlaku 1 bulan",
 ];
 
+const RATING_LABELS: Record<string, string> = {
+  "1": "Tidak puas",
+  "2": "Kurang puas",
+  "3": "Cukup",
+  "4": "Puas",
+  "5": "Sangat puas",
+};
+
 export default function Pricing() {
   const { isPro, isAdmin, expiresAt, refreshPlan } = usePlan();
   const [email, setEmail] = useState("");
@@ -34,6 +42,8 @@ export default function Pricing() {
   const [message, setMessage] = useState("");
   const [feedbackType, setFeedbackType] = useState<"review" | "support">("review");
   const [rating, setRating] = useState("5");
+  const [university, setUniversity] = useState("");
+  const [semester, setSemester] = useState("");
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [feedbackBusy, setFeedbackBusy] = useState(false);
   const [feedbackNotice, setFeedbackNotice] = useState("");
@@ -92,12 +102,16 @@ export default function Pricing() {
         body: JSON.stringify({
           type: feedbackType,
           rating: feedbackType === "review" ? Number(rating) : null,
+          university,
+          semester: Number(semester),
           message: feedbackMessage,
         }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Ulasan atau dukungan tidak dapat dikirim.");
       setFeedbackMessage("");
+      setUniversity("");
+      setSemester("");
       setFeedbackNotice("Terima kasih! Pesanmu sudah terkirim ke dashboard admin.");
     } catch (error) {
       setFeedbackNotice(error instanceof Error ? error.message : "Ulasan atau dukungan tidak dapat dikirim.");
@@ -187,16 +201,59 @@ export default function Pricing() {
                 </select>
               </label>
               {feedbackType === "review" && (
-                <label className="text-sm font-medium">Rating
-                  <select value={rating} onChange={(event) => setRating(event.target.value)} className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 dark:border-gray-700 dark:bg-gray-950">
-                    <option value="5">5 — Sangat puas</option>
-                    <option value="4">4 — Puas</option>
-                    <option value="3">3 — Cukup</option>
-                    <option value="2">2 — Kurang puas</option>
-                    <option value="1">1 — Tidak puas</option>
-                  </select>
-                </label>
+                <fieldset className="text-sm font-medium">
+                  <legend>Rating</legend>
+                  <div role="radiogroup" aria-label="Pilih rating" className="mt-2 flex items-center gap-1">
+                    {Object.keys(RATING_LABELS).map((value) => {
+                      const selected = rating === value;
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          role="radio"
+                          aria-checked={selected}
+                          aria-label={`${value} bintang — ${RATING_LABELS[value]}`}
+                          onClick={() => setRating(value)}
+                          className="rounded-md p-1 text-amber-500 transition-colors hover:bg-amber-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500 dark:hover:bg-amber-950/50"
+                        >
+                          <Star size={25} fill={Number(value) <= Number(rating) ? "currentColor" : "none"} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-1 text-xs font-normal text-gray-500 dark:text-gray-400">
+                    {rating} bintang — {RATING_LABELS[rating]}
+                  </p>
+                </fieldset>
               )}
+              <label className="text-sm font-medium" htmlFor="pro-feedback-university">Asal kampus
+                <input
+                  id="pro-feedback-university"
+                  type="text"
+                  required
+                  minLength={2}
+                  maxLength={120}
+                  autoComplete="organization"
+                  value={university}
+                  onChange={(event) => setUniversity(event.target.value)}
+                  placeholder="Contoh: Universitas Indonesia"
+                  className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 dark:border-gray-700 dark:bg-gray-950"
+                />
+              </label>
+              <label className="text-sm font-medium" htmlFor="pro-feedback-semester">Semester saat ini
+                <select
+                  id="pro-feedback-semester"
+                  required
+                  value={semester}
+                  onChange={(event) => setSemester(event.target.value)}
+                  className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 dark:border-gray-700 dark:bg-gray-950"
+                >
+                  <option value="" disabled>Pilih semester</option>
+                  {Array.from({ length: 20 }, (_, index) => index + 1).map((value) => (
+                    <option key={value} value={value}>Semester {value}</option>
+                  ))}
+                </select>
+              </label>
             </div>
             <label className="block text-sm font-medium" htmlFor="pro-feedback-message">{feedbackType === "review" ? "Ceritakan pengalamanmu" : "Apa yang bisa kami bantu?"}
               <textarea id="pro-feedback-message" required minLength={10} maxLength={2000} rows={4} value={feedbackMessage} onChange={(event) => setFeedbackMessage(event.target.value)} placeholder="Tulis pesanmu (10–2.000 karakter)" className="mt-2 w-full resize-y rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-950" />

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { CircleDollarSign, KeyRound, LogOut, MessageSquareText, RefreshCw, Search, ShieldCheck } from "lucide-react";
+import { BarChart3, CircleDollarSign, KeyRound, LogOut, MessageSquareText, RefreshCw, Search, ShieldCheck } from "lucide-react";
 import { ADMIN_AUTH_CHANGED_EVENT } from "../context/PlanContext";
 
 type Payment = {
@@ -17,8 +17,17 @@ type Feedback = {
   customer_email: string;
   feedback_type: "review" | "support";
   rating: number | null;
+  university: string | null;
+  semester: number | null;
   message: string;
   created_at: string;
+};
+type DailyUsage = { date: string; views: number; interactions: number };
+type PageUsage = { path: string; views: number; interactions: number };
+type UsageAnalytics = {
+  daily: DailyUsage[];
+  pages: PageUsage[];
+  totals: { views: number; interactions: number };
 };
 const AUTH_KEY = "kuliahbit-admin-auth";
 const PAGE_SIZE = 50;
@@ -37,6 +46,59 @@ function formatDate(value: string | null) {
   return value ? new Date(value).toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" }) : "—";
 }
 
+function UsageChart({ daily }: { daily: DailyUsage[] }) {
+  const width = 800;
+  const height = 260;
+  const left = 48;
+  const right = 20;
+  const top = 20;
+  const bottom = 38;
+  const maxValue = Math.max(1, ...daily.flatMap((item) => [item.views, item.interactions]));
+  const x = (index: number) => left + (index / Math.max(1, daily.length - 1)) * (width - left - right);
+  const y = (value: number) => height - bottom - (value / maxValue) * (height - top - bottom);
+  const viewPoints = daily.map((item, index) => `${x(index)},${y(item.views)}`).join(" ");
+  const interactionPoints = daily.map((item, index) => `${x(index)},${y(item.interactions)}`).join(" ");
+  const labelIndexes = [...new Set([0, 7, 14, 21, daily.length - 1])].filter((index) => index >= 0 && index < daily.length);
+
+  return (
+    <div className="mt-4 overflow-x-auto">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label="Grafik kunjungan halaman dan interaksi selama 30 hari terakhir"
+        className="min-w-[620px] w-full"
+      >
+        <title>Kunjungan dan interaksi 30 hari terakhir</title>
+        {[0, 1, 2, 3].map((step) => {
+          const value = Math.round((maxValue / 3) * (3 - step));
+          const lineY = top + (step / 3) * (height - top - bottom);
+          return (
+            <g key={step}>
+              <line x1={left} y1={lineY} x2={width - right} y2={lineY} stroke="#334155" strokeDasharray="4 5" />
+              <text x={left - 8} y={lineY + 4} textAnchor="end" fill="#94a3b8" fontSize="11">{value}</text>
+            </g>
+          );
+        })}
+        <polyline points={viewPoints} fill="none" stroke="#fbbf24" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
+        <polyline points={interactionPoints} fill="none" stroke="#38bdf8" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
+        {labelIndexes.map((index) => (
+          <text key={index} x={x(index)} y={height - 10} textAnchor="middle" fill="#94a3b8" fontSize="11">
+            {new Date(`${daily[index].date}T00:00:00`).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
+          </text>
+        ))}
+      </svg>
+      <div className="mt-2 flex flex-wrap gap-5 text-xs text-slate-300">
+        <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-amber-400" /> Kunjungan halaman</span>
+        <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-sky-400" /> Interaksi tombol/tautan</span>
+      </div>
+    </div>
+  );
+}
+
+function pageLabel(path: string) {
+  return path === "/" ? "Beranda" : path.replace(/^\//, "").replaceAll("/", " / ");
+}
+
 export default function AdminPayments() {
   const [authenticated, setAuthenticated] = useState(() => sessionStorage.getItem(AUTH_KEY) === "yes");
   const [tokenInput, setTokenInput] = useState("");
@@ -50,6 +112,9 @@ export default function AdminPayments() {
   const [error, setError] = useState("");
   const [feedbackError, setFeedbackError] = useState("");
   const [feedbackBusy, setFeedbackBusy] = useState(false);
+  const [analytics, setAnalytics] = useState<UsageAnalytics | null>(null);
+  const [analyticsBusy, setAnalyticsBusy] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState("");
 
   const loadPayments = useCallback(async (pageOffset = 0) => {
     if (!authenticated) return;
@@ -101,6 +166,29 @@ export default function AdminPayments() {
     }
   }, [authenticated]);
 
+  const loadAnalytics = useCallback(async () => {
+    if (!authenticated) return;
+    setAnalyticsBusy(true);
+    setAnalyticsError("");
+    try {
+      const response = await fetch("/api/admin-analytics", { cache: "no-store", credentials: "same-origin" });
+      const data = await response.json();
+      if (response.status === 401) {
+        sessionStorage.removeItem(AUTH_KEY);
+        setAuthenticated(false);
+        setAnalytics(null);
+        notifyAdminAuthChanged();
+        throw new Error("Token admin tidak valid atau sudah tidak aktif.");
+      }
+      if (!response.ok) throw new Error(data.error || "Gagal memuat analitik.");
+      setAnalytics(data as UsageAnalytics);
+    } catch (err) {
+      setAnalyticsError(err instanceof Error ? err.message : "Gagal memuat analitik.");
+    } finally {
+      setAnalyticsBusy(false);
+    }
+  }, [authenticated]);
+
   useEffect(() => {
     if (authenticated) void loadPayments(0);
   }, [authenticated, query, status, loadPayments]);
@@ -110,10 +198,20 @@ export default function AdminPayments() {
   }, [authenticated, loadFeedback]);
 
   useEffect(() => {
+    if (authenticated) void loadAnalytics();
+  }, [authenticated, loadAnalytics]);
+
+  useEffect(() => {
     if (!authenticated) return;
     const interval = window.setInterval(() => void loadFeedback(), 15_000);
     return () => window.clearInterval(interval);
   }, [authenticated, loadFeedback]);
+
+  useEffect(() => {
+    if (!authenticated) return;
+    const interval = window.setInterval(() => void loadAnalytics(), 60_000);
+    return () => window.clearInterval(interval);
+  }, [authenticated, loadAnalytics]);
 
   const submitToken = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -146,6 +244,7 @@ export default function AdminPayments() {
     setAuthenticated(false);
     setPayments([]);
     setFeedback([]);
+    setAnalytics(null);
     setTotal(0);
     await fetch("/api/admin-logout", { method: "POST", credentials: "same-origin" });
     notifyAdminAuthChanged();
@@ -182,10 +281,51 @@ export default function AdminPayments() {
             <p className="mt-1 text-sm text-slate-400">Pantau invoice, pembeli, dan masa aktif langganan.</p>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => { void loadPayments(offset); void loadFeedback(); }} disabled={busy || feedbackBusy} className="inline-flex items-center gap-2 rounded-xl border border-slate-700 px-3 py-2.5 text-sm hover:bg-slate-900 disabled:opacity-50"><RefreshCw size={16} className={busy || feedbackBusy ? "animate-spin" : ""} /> Muat ulang</button>
+            <button onClick={() => { void loadPayments(offset); void loadFeedback(); void loadAnalytics(); }} disabled={busy || feedbackBusy || analyticsBusy} className="inline-flex items-center gap-2 rounded-xl border border-slate-700 px-3 py-2.5 text-sm hover:bg-slate-900 disabled:opacity-50"><RefreshCw size={16} className={busy || feedbackBusy || analyticsBusy ? "animate-spin" : ""} /> Muat ulang</button>
             <button onClick={signOut} className="inline-flex items-center gap-2 rounded-xl border border-slate-700 px-3 py-2.5 text-sm hover:bg-slate-900"><LogOut size={16} /> Keluar</button>
           </div>
         </header>
+
+        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-400/10 text-sky-300"><BarChart3 size={20} /></div>
+            <div>
+              <h2 className="text-lg font-semibold">Analitik penggunaan</h2>
+              <p className="text-sm text-slate-400">Kunjungan halaman dan interaksi tombol/tautan · 30 hari terakhir</p>
+            </div>
+          </div>
+          {analyticsError && <p role="alert" className="mt-4 rounded-xl border border-rose-900 bg-rose-950/50 px-4 py-3 text-sm text-rose-300">{analyticsError}</p>}
+          {analytics ? (
+            <>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                  <p className="text-sm text-slate-400">Kunjungan halaman</p>
+                  <p className="mt-1 text-2xl font-bold text-amber-300">{analytics.totals.views.toLocaleString("id-ID")}</p>
+                </div>
+                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                  <p className="text-sm text-slate-400">Interaksi tombol/tautan</p>
+                  <p className="mt-1 text-2xl font-bold text-sky-300">{analytics.totals.interactions.toLocaleString("id-ID")}</p>
+                </div>
+              </div>
+              <UsageChart daily={analytics.daily} />
+              <div className="mt-6">
+                <h3 className="text-sm font-semibold">Halaman paling banyak dikunjungi</h3>
+                <div className="mt-2 divide-y divide-slate-800">
+                  {analytics.pages.map((page) => (
+                    <div key={page.path} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
+                      <span className="text-slate-200">{pageLabel(page.path)}</span>
+                      <span className="text-slate-400">{page.views.toLocaleString("id-ID")} kunjungan · {page.interactions.toLocaleString("id-ID")} interaksi</span>
+                    </div>
+                  ))}
+                  {!analytics.pages.length && <p className="py-4 text-sm text-slate-500">{analyticsBusy ? "Memuat data…" : "Belum ada data penggunaan."}</p>}
+                </div>
+              </div>
+            </>
+          ) : (
+            !analyticsError && <p className="mt-4 text-sm text-slate-400">{analyticsBusy ? "Memuat data analitik…" : "Data analitik belum tersedia."}</p>
+          )}
+          <p className="mt-4 text-xs text-slate-500">Angka interaksi menghitung klik tombol/tautan, bukan jumlah pengguna unik atau keberhasilan setiap aksi. Tidak ada teks klik atau identitas pengunjung yang disimpan.</p>
+        </section>
 
         <section className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5"><p className="text-sm text-slate-400">Transaksi sesuai filter</p><p className="mt-2 text-3xl font-bold">{total.toLocaleString("id-ID")}</p></div>
@@ -223,17 +363,19 @@ export default function AdminPayments() {
           </div>
           {feedbackError && <p role="alert" className="mt-4 rounded-xl border border-rose-900 bg-rose-950/50 px-4 py-3 text-sm text-rose-300">{feedbackError}</p>}
           <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-[850px] text-left text-sm">
-              <thead className="text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-3">Tanggal</th><th className="px-3 py-3">Pembeli</th><th className="px-3 py-3">Jenis</th><th className="px-3 py-3">Rating</th><th className="px-3 py-3">Pesan</th></tr></thead>
+            <table className="w-full min-w-[1050px] text-left text-sm">
+              <thead className="text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-3">Tanggal</th><th className="px-3 py-3">Pembeli</th><th className="px-3 py-3">Asal kampus</th><th className="px-3 py-3">Semester</th><th className="px-3 py-3">Jenis</th><th className="px-3 py-3">Rating</th><th className="px-3 py-3">Pesan</th></tr></thead>
               <tbody className="divide-y divide-slate-800">
                 {feedback.map((item) => <tr key={item.id} className="align-top hover:bg-slate-800/40">
                   <td className="whitespace-nowrap px-3 py-4 text-slate-400">{formatDate(item.created_at)}</td>
                   <td className="px-3 py-4 text-slate-300">{item.customer_email}</td>
+                  <td className="px-3 py-4 text-slate-300">{item.university || "—"}</td>
+                  <td className="whitespace-nowrap px-3 py-4 text-slate-300">{item.semester ? `Semester ${item.semester}` : "—"}</td>
                   <td className="px-3 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${item.feedback_type === "review" ? "bg-amber-300/10 text-amber-200" : "bg-blue-400/10 text-blue-300"}`}>{item.feedback_type === "review" ? "Ulasan" : "Dukungan"}</span></td>
                   <td className="whitespace-nowrap px-3 py-4 text-amber-200">{item.rating ? `${item.rating}/5` : "—"}</td>
                   <td className="max-w-xl whitespace-pre-wrap px-3 py-4 text-slate-300">{item.message}</td>
                 </tr>)}
-                {!feedback.length && <tr><td colSpan={5} className="px-3 py-12 text-center text-slate-500">{feedbackBusy ? "Memuat ulasan dan dukungan…" : "Belum ada ulasan atau dukungan."}</td></tr>}
+                {!feedback.length && <tr><td colSpan={7} className="px-3 py-12 text-center text-slate-500">{feedbackBusy ? "Memuat ulasan dan dukungan…" : "Belum ada ulasan atau dukungan."}</td></tr>}
               </tbody>
             </table>
           </div>

@@ -25,8 +25,16 @@ export default async function handler(req, res) {
     const type = req.body?.type;
     const message = typeof req.body?.message === "string" ? req.body.message.trim() : "";
     const rating = req.body?.rating;
+    const university = typeof req.body?.university === "string" ? req.body.university.trim() : "";
+    const semester = req.body?.semester;
     if (type !== "review" && type !== "support") {
       return send(res, 400, { error: "Pilih jenis ulasan atau dukungan." });
+    }
+    if (university.length < 2 || university.length > 120) {
+      return send(res, 400, { error: "Nama kampus harus berisi 2–120 karakter." });
+    }
+    if (!Number.isInteger(semester) || semester < 1 || semester > 20) {
+      return send(res, 400, { error: "Pilih semester dari 1 sampai 20." });
     }
     if (message.length < 10 || message.length > 2000) {
       return send(res, 400, { error: "Pesan harus berisi 10–2.000 karakter." });
@@ -49,6 +57,8 @@ export default async function handler(req, res) {
         customer_email: email,
         feedback_type: type,
         rating: type === "review" ? rating : null,
+        university,
+        semester,
         message,
       }),
     });

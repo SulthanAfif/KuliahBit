@@ -20,7 +20,7 @@ export default async function handler(req, res) {
 
   try {
     const feedback = await dbRequest(
-      "pro_feedback?select=id,customer_email,feedback_type,rating,message,created_at&order=created_at.desc&limit=100",
+      "pro_feedback?select=id,customer_email,feedback_type,rating,university,semester,message,created_at&order=created_at.desc&limit=100",
     );
     return send(res, 200, { feedback });
   } catch (error) {
