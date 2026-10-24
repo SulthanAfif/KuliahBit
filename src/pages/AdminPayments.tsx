@@ -18,6 +18,7 @@ type Feedback = {
   feedback_type: "review" | "support";
   rating: number | null;
   university: string | null;
+  major: string | null;
   semester: number | null;
   message: string;
   created_at: string;
@@ -363,19 +364,20 @@ export default function AdminPayments() {
           </div>
           {feedbackError && <p role="alert" className="mt-4 rounded-xl border border-rose-900 bg-rose-950/50 px-4 py-3 text-sm text-rose-300">{feedbackError}</p>}
           <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-[1050px] text-left text-sm">
-              <thead className="text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-3">Tanggal</th><th className="px-3 py-3">Pembeli</th><th className="px-3 py-3">Asal kampus</th><th className="px-3 py-3">Semester</th><th className="px-3 py-3">Jenis</th><th className="px-3 py-3">Rating</th><th className="px-3 py-3">Pesan</th></tr></thead>
+            <table className="w-full min-w-[1200px] text-left text-sm">
+              <thead className="text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-3 py-3">Tanggal</th><th className="px-3 py-3">Pembeli</th><th className="px-3 py-3">Asal kampus</th><th className="px-3 py-3">Jurusan</th><th className="px-3 py-3">Semester</th><th className="px-3 py-3">Jenis</th><th className="px-3 py-3">Rating</th><th className="px-3 py-3">Pesan</th></tr></thead>
               <tbody className="divide-y divide-slate-800">
                 {feedback.map((item) => <tr key={item.id} className="align-top hover:bg-slate-800/40">
                   <td className="whitespace-nowrap px-3 py-4 text-slate-400">{formatDate(item.created_at)}</td>
                   <td className="px-3 py-4 text-slate-300">{item.customer_email}</td>
                   <td className="px-3 py-4 text-slate-300">{item.university || "—"}</td>
+                  <td className="px-3 py-4 text-slate-300">{item.major || "—"}</td>
                   <td className="whitespace-nowrap px-3 py-4 text-slate-300">{item.semester ? `Semester ${item.semester}` : "—"}</td>
                   <td className="px-3 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${item.feedback_type === "review" ? "bg-amber-300/10 text-amber-200" : "bg-blue-400/10 text-blue-300"}`}>{item.feedback_type === "review" ? "Ulasan" : "Dukungan"}</span></td>
                   <td className="whitespace-nowrap px-3 py-4 text-amber-200">{item.rating ? `${item.rating}/5` : "—"}</td>
                   <td className="max-w-xl whitespace-pre-wrap px-3 py-4 text-slate-300">{item.message}</td>
                 </tr>)}
-                {!feedback.length && <tr><td colSpan={7} className="px-3 py-12 text-center text-slate-500">{feedbackBusy ? "Memuat ulasan dan dukungan…" : "Belum ada ulasan atau dukungan."}</td></tr>}
+                {!feedback.length && <tr><td colSpan={8} className="px-3 py-12 text-center text-slate-500">{feedbackBusy ? "Memuat ulasan dan dukungan…" : "Belum ada ulasan atau dukungan."}</td></tr>}
               </tbody>
             </table>
           </div>

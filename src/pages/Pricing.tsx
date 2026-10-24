@@ -43,6 +43,7 @@ export default function Pricing() {
   const [feedbackType, setFeedbackType] = useState<"review" | "support">("review");
   const [rating, setRating] = useState("5");
   const [university, setUniversity] = useState("");
+  const [major, setMajor] = useState("");
   const [semester, setSemester] = useState("");
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [feedbackBusy, setFeedbackBusy] = useState(false);
@@ -103,6 +104,7 @@ export default function Pricing() {
           type: feedbackType,
           rating: feedbackType === "review" ? Number(rating) : null,
           university,
+          major,
           semester: Number(semester),
           message: feedbackMessage,
         }),
@@ -111,6 +113,7 @@ export default function Pricing() {
       if (!response.ok) throw new Error(data.error || "Ulasan atau dukungan tidak dapat dikirim.");
       setFeedbackMessage("");
       setUniversity("");
+      setMajor("");
       setSemester("");
       setFeedbackNotice("Terima kasih! Pesanmu sudah terkirim ke dashboard admin.");
     } catch (error) {
@@ -237,6 +240,19 @@ export default function Pricing() {
                   value={university}
                   onChange={(event) => setUniversity(event.target.value)}
                   placeholder="Contoh: Universitas Indonesia"
+                  className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 dark:border-gray-700 dark:bg-gray-950"
+                />
+              </label>
+              <label className="text-sm font-medium" htmlFor="pro-feedback-major">Jurusan
+                <input
+                  id="pro-feedback-major"
+                  type="text"
+                  required
+                  minLength={2}
+                  maxLength={120}
+                  value={major}
+                  onChange={(event) => setMajor(event.target.value)}
+                  placeholder="Contoh: Teknik Informatika"
                   className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 dark:border-gray-700 dark:bg-gray-950"
                 />
               </label>
