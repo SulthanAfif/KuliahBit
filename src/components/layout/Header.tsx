@@ -15,7 +15,6 @@ const RESET_KEYS: Record<string, string[]> = {
   "/beasiswa": ["opp-tracker"],
   "/cram": ["draft-cram-text", "draft-cram-minutes", "draft-cram-result"],
   "/notes": ["notes", "draft-note-open", "draft-note-title", "draft-note-content"],
-  "/nilai-akhir": ["draft-nilai-akhir-items", "draft-nilai-akhir-target", "draft-nilai-akhir-focus"],
   "/slides": ["draft-slide-topic", "draft-slide-material", "draft-slide-content", "draft-slide-template", "draft-slide-layout", "draft-slide-font", "draft-slide-font-sizes"],
   "/cv": ["cv-data", "draft-cv-template"],
   "/surat": ["draft-surat-template", "draft-surat-values"],
@@ -40,6 +39,7 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
       flashcards: getFromStorage("flashcard-sets", []),
       quiz: getFromStorage("quiz-sets", []),
       notes: getFromStorage("notes", []),
+      opportunities: getFromStorage("opp-tracker", []),
       skripsi: getFromStorage("skripsi-progress", []),
       exportedAt: new Date().toISOString(),
     };

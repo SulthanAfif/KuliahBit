@@ -2,16 +2,16 @@ import { getFromStorage, saveToStorage } from "./storage";
 
 /** Kuota bulanan paket Free. */
 export const FREE_LIMITS = {
-  aiPerMonth: 3,
-  pdfUploadsPerMonth: 3,
-  flashcardSets: 3,
-  flashcardCardsTotal: 3,
-  quizSets: 3,
-  quizQuestions: 3,
-  bankItems: 3,
-  notes: 3,
-  cvExports: 3,
-  pdfExports: 3,
+  aiPerMonth: 5,
+  pdfUploadsPerMonth: 5,
+  flashcardSets: 5,
+  flashcardCardsTotal: 5,
+  quizSets: 5,
+  quizQuestions: 5,
+  bankItems: 5,
+  notes: 5,
+  cvExports: 5,
+  pdfExports: 5,
   pdfMaxMb: 10,
   pdfMaxChars: 30000,
 } as const;

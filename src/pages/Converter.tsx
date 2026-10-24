@@ -24,6 +24,7 @@ import {
 import { FREE_LIMITS, canUseFeature, getFeatureUsageThisMonth, incrementFeatureUsage } from "../lib/limits";
 import { usePlan } from "../context/PlanContext";
 import { UpgradeCard } from "../components/ProGate";
+import { useNavigate } from "react-router-dom";
 
 type ConvertId =
   | "csv-xlsx"
@@ -133,6 +134,7 @@ const OPTIONS: ConvertOption[] = [
 
 export default function Converter() {
   const { isPro } = usePlan();
+  const navigate = useNavigate();
   const [, setUsageRefresh] = useState(0);
   const [selected, setSelected] = useState<ConvertId>("docx-pdf");
   const [loading, setLoading] = useState(false);
@@ -202,7 +204,11 @@ export default function Converter() {
   };
 
   const handleDownloadPdf = async () => {
-    if (!sourceFile || !canUseFeature(isPro, "pdfExports")) return;
+    if (!canUseFeature(isPro, "pdfExports")) {
+      navigate("/pricing");
+      return;
+    }
+    if (!sourceFile) return;
     setLoading(true);
     setError(null);
     try {
@@ -217,7 +223,11 @@ export default function Converter() {
   };
 
   const handlePrintPdf = () => {
-    if (!previewHtml || !canUseFeature(isPro, "pdfExports")) return;
+    if (!canUseFeature(isPro, "pdfExports")) {
+      navigate("/pricing");
+      return;
+    }
+    if (!previewHtml) return;
     try {
       printHtmlAsPdf(
         previewHtml,
@@ -230,7 +240,10 @@ export default function Converter() {
   };
 
   const handlePrintIframe = () => {
-    if (!canUseFeature(isPro, "pdfExports")) return;
+    if (!canUseFeature(isPro, "pdfExports")) {
+      navigate("/pricing");
+      return;
+    }
     const iframe = iframeRef.current;
     if (!iframe?.contentWindow) return;
     iframe.contentWindow.focus();
@@ -338,7 +351,7 @@ export default function Converter() {
           <div className="flex flex-wrap gap-2">
             {selected === "docx-pdf" && <button
               onClick={handleDownloadPdf}
-              disabled={loading || !sourceFile || !canExportPdf}
+              disabled={loading || !sourceFile}
               className="flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
@@ -346,7 +359,6 @@ export default function Converter() {
             </button>}
             <button
               onClick={handlePrintPdf}
-              disabled={!canExportPdf}
               className="flex items-center gap-2 rounded-xl border border-violet-300 px-5 py-2.5 text-sm font-medium text-violet-700 hover:bg-violet-50 dark:border-violet-700 dark:text-violet-300 dark:hover:bg-violet-950"
             >
               <Printer size={16} />
@@ -354,7 +366,6 @@ export default function Converter() {
             </button>
             {selected === "docx-pdf" && <button
               onClick={handlePrintIframe}
-              disabled={!canExportPdf}
               className="flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               <Printer size={16} /> Cetak dari preview

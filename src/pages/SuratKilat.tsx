@@ -4,6 +4,7 @@ import { Mail, Copy, Check, Download, Loader2, AlertCircle } from "lucide-react"
 import { FREE_LIMITS, canUseFeature, getFeatureUsageThisMonth, incrementFeatureUsage } from "../lib/limits";
 import { usePlan } from "../context/PlanContext";
 import { UpgradeCard } from "../components/ProGate";
+import { useNavigate } from "react-router-dom";
 
 type TemplateId = "izin_sakit" | "izin_keluarga" | "cuti" | "perpanjangan" | "nilai";
 
@@ -154,6 +155,7 @@ ${v.nama || "Nama Anda"}`,
 
 export default function SuratKilat() {
   const { isPro } = usePlan();
+  const navigate = useNavigate();
   const [, setUsageRefresh] = useState(0);
   const [tpl, setTpl] = usePersistentState<TemplateId>("draft-surat-template", "izin_sakit");
   const [values, setValues] = usePersistentState<Record<string, string>>("draft-surat-values", {});
@@ -172,7 +174,10 @@ export default function SuratKilat() {
   };
 
   const downloadPdf = async () => {
-    if (!canUseFeature(isPro, "pdfExports")) return;
+    if (!canUseFeature(isPro, "pdfExports")) {
+      navigate("/pricing");
+      return;
+    }
     if (!previewRef.current) return;
     setDownloading(true);
     setError("");
@@ -284,7 +289,7 @@ export default function SuratKilat() {
           </button>
           <button
             onClick={() => void downloadPdf()}
-            disabled={downloading || !canUseFeature(isPro, "pdfExports")}
+            disabled={downloading}
             className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm text-gray-800 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
           >
             {downloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}

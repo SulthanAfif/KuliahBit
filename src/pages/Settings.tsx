@@ -3,12 +3,12 @@ import { useTheme } from "../context/ThemeContext";
 import { removeFromStorage } from "../lib/storage";
 
 export default function Settings() {
-  const { isPro, deactivatePro } = usePlan();
+  const { isPro, expiresAt } = usePlan();
   const { theme, toggleTheme } = useTheme();
 
   const handleClearAll = () => {
     if (confirm("Hapus SEMUA data (tugas, flashcard, quiz, catatan, dll)? Tidak bisa dibatalkan.")) {
-      ["tasks", "courses", "flashcard-sets", "quiz-sets", "notes", "skripsi-progress", "skripsi-judul", "ai-usage-today", "ai-usage-monthly", "ipk-items", "schedule-items", "citations", "agenda-items", "habits", "attendance", "cv-data", "bank-soal-materi", "pdf-search-cache"].forEach(
+      ["tasks", "courses", "flashcard-sets", "quiz-sets", "notes", "opp-tracker", "skripsi-progress", "skripsi-judul", "ai-usage-today", "ai-usage-monthly", "ipk-items", "schedule-items", "citations", "agenda-items", "habits", "attendance", "cv-data", "bank-soal-materi", "pdf-search-cache"].forEach(
         removeFromStorage
       );
       alert("Semua data dihapus. Refresh halaman.");
@@ -27,6 +27,8 @@ export default function Settings() {
         if (data.flashcards) localStorage.setItem("flashcard-sets", JSON.stringify(data.flashcards));
         if (data.quiz) localStorage.setItem("quiz-sets", JSON.stringify(data.quiz));
         if (data.notes) localStorage.setItem("notes", JSON.stringify(data.notes));
+        if (data.opportunities) localStorage.setItem("opp-tracker", JSON.stringify(data.opportunities));
+        if (data["opp-tracker"]) localStorage.setItem("opp-tracker", JSON.stringify(data["opp-tracker"]));
         if (data.skripsi) localStorage.setItem("skripsi-progress", JSON.stringify(data.skripsi));
         alert("Import berhasil! Refresh halaman.");
         window.location.reload();
@@ -55,13 +57,8 @@ export default function Settings() {
         <div className="flex flex-wrap items-center justify-between gap-3 p-4">
           <div>
             <p className="font-medium">Paket</p>
-            <p className="text-sm text-gray-500">{isPro ? "Pro aktif" : "Free"}</p>
+            <p className="text-sm text-gray-500">{isPro ? `Pro aktif sampai ${new Date(expiresAt!).toLocaleDateString("id-ID")}` : "Free"}</p>
           </div>
-          {isPro && (
-            <button onClick={deactivatePro} className="px-4 py-2 rounded-lg border text-sm text-red-500">
-              Nonaktifkan Pro
-            </button>
-          )}
         </div>
 
         <div className="p-4">

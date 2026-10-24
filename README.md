@@ -30,8 +30,7 @@ KuliahBit adalah aplikasi web untuk membantu mahasiswa Indonesia mengatur kegiat
 ### Perkuliahan dan produktivitas
 
 - Dashboard, tugas dan deadline, jadwal, agenda, serta prioritas tugas.
-- Pelacak kebiasaan dan absensi.
-- Kalkulator IPK, nilai akhir, dan nilai minimal.
+- Absensi.
 - Bantuan format tugas, pembuat makalah, surat kilat, serta konverter dokumen.
 - CV builder.
 
@@ -112,18 +111,29 @@ Batas paket Free didefinisikan di `src/lib/limits.ts` dan ditampilkan pada halam
 
 | Fitur terbatas | Jatah Free saat ini |
 | --- | ---: |
-| Generate AI | 3 kali per bulan |
-| Unduh teks CV | 3 kali per bulan |
-| Semua unduhan PDF (CV, presentasi, surat, dan konverter) | 3 kali per bulan total |
-| Flashcard | 3 set dan 3 kartu total |
-| Kuis | 3 set dan 3 soal total |
-| Bank soal/materi | 3 item |
-| Catatan | 3 item |
+| Generate AI | 5 kali per bulan |
+| Unduh teks CV | 5 kali per bulan |
+| Semua unduhan PDF (CV, presentasi, surat, dan konverter) | 5 kali per bulan total |
+| Flashcard | 5 set dan 5 kartu total |
+| Kuis | 5 set dan 5 soal total |
+| Bank soal/materi | 5 item |
+| Catatan | 5 item |
 | Impor PDF | Maksimal 10 MB dan teks dibatasi 30.000 karakter |
 
 Ketika kuota tercapai, aksi yang dibatasi mengarahkan pengguna ke halaman `/pricing`. Fitur yang tidak tercantum pada tabel tetap tersedia sesuai implementasi aplikasi.
 
-**Catatan Pro:** halaman harga saat ini menjalankan simulasi Pro 30 hari yang disimpan di browser. Harga yang ditampilkan bersifat contoh; pembayaran, verifikasi langganan, dan aktivasi Pro dari server belum terhubung. Status paket dan limit di sisi browser bukan mekanisme otorisasi yang aman untuk layanan berbayar.
+**Catatan Pro:** harga yang ditetapkan adalah Rp25.000 per bulan. Endpoint Vercel membuat sesi DOKU Checkout, memverifikasi notifikasi bertanda tangan, lalu memperbarui langganan di Supabase. Setiap pembayaran menambah masa aktif satu bulan; pembayaran tidak ditagih otomatis. Identitas paket saat ini terikat pada browser yang melakukan checkout. Fitur aplikasi dan limit masih berjalan di client, sehingga backend ini belum menjadi otorisasi server untuk data atau fitur berbayar.
+
+### Menyiapkan pembayaran DOKU
+
+1. Buat proyek Supabase dan jalankan migration `supabase/migrations/202610240001_doku_billing.sql` dan `supabase/migrations/202610240002_pro_feedback.sql` melalui SQL Editor.
+2. Tambahkan `DOKU_CLIENT_ID`, `DOKU_SECRET_KEY`, `DOKU_ENV`, `APP_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, dan `ADMIN_DASHBOARD_TOKEN` sebagai environment variables di Vercel. Gunakan `DOKU_ENV=sandbox` saat uji coba dan `production` setelah kredensial live siap. Buat token admin acak minimal 32 karakter heksadesimal (contoh pembuatannya ada di `.env.example`). Service role key, token admin, dan secret DOKU hanya boleh disimpan sebagai secret server; jangan gunakan prefix `VITE_`.
+3. Arahkan DOKU HTTP Notification ke `https://<domain-aplikasi>/api/doku-notification` untuk kanal pembayaran yang diaktifkan di dashboard DOKU.
+4. Untuk menjalankan fungsi server lokal, gunakan `vercel dev` setelah mengisi environment variables lokal dari `.env.example`. `APP_URL` harus menunjuk origin yang dipakai membuka aplikasi.
+
+Email diminta pada checkout untuk diteruskan ke DOKU. Status Pro tersimpan pada cookie browser HttpOnly; menghapus cookie atau berpindah browser memutus akses ke status langganan itu karena aplikasi belum memiliki login/akun. Pembayaran berikutnya harus dimulai manual untuk memperpanjang masa aktif.
+
+Halaman pemantauan admin tersedia di `/admin/pembayaran`. Masukkan `ADMIN_DASHBOARD_TOKEN` untuk login; server mengirim token sebagai cookie HttpOnly berumur 8 jam. Endpoint admin membaca invoice serta tabel ulasan/dukungan langsung dari database dan tidak membuka tabel Supabase ke browser. Daftar ulasan/dukungan diperbarui otomatis setiap 15 detik selama dashboard admin terbuka. Pengguna dengan langganan Pro aktif dapat mengirim ulasan atau pertanyaan dari bagian Ulasan dan dukungan Pro di halaman `/pricing`; identitas email diambil dari transaksi berbayar dan pesan muncul di tabel dashboard admin.
 
 ## Penyimpanan dan privasi
 

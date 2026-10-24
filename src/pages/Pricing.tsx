@@ -1,4 +1,5 @@
-import { Check, Crown, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, Crown, MessageSquareText, Send, X } from "lucide-react";
 import { usePlan } from "../context/PlanContext";
 import { FREE_LIMITS, PRO_LIMITS } from "../lib/limits";
 
@@ -23,11 +24,87 @@ const PRO_FEATURES = [
   `Impor PDF tanpa kuota bulanan, maks. ${PRO_LIMITS.pdfMaxMb} MB dan ${PRO_LIMITS.pdfMaxChars.toLocaleString("id-ID")} karakter teks per file`,
   "Semua template CV, termasuk template premium",
   "Unduh PDF tanpa kuota bulanan",
-  "Status Pro demo berlaku 30 hari dan tersimpan di browser ini",
+  "Langganan Pro berlaku 1 bulan",
 ];
 
 export default function Pricing() {
-  const { isPro, activatePro, deactivatePro } = usePlan();
+  const { isPro, expiresAt, refreshPlan } = usePlan();
+  const [email, setEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [feedbackType, setFeedbackType] = useState<"review" | "support">("review");
+  const [rating, setRating] = useState("5");
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [feedbackBusy, setFeedbackBusy] = useState(false);
+  const [feedbackNotice, setFeedbackNotice] = useState("");
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("payment") !== "return") return;
+    setMessage("Memeriksa pembayaran…");
+    let attempts = 0;
+    const timer = window.setInterval(() => {
+      attempts += 1;
+      void refreshPlan().then((active) => {
+        if (active) {
+          window.clearInterval(timer);
+          setMessage("Pembayaran berhasil. Pro aktif selama satu bulan.");
+          window.history.replaceState({}, "", window.location.pathname);
+        } else if (attempts >= 24) {
+          window.clearInterval(timer);
+          setMessage("Pembayaran belum terkonfirmasi. Jika sudah membayar, tunggu beberapa saat lalu muat ulang halaman ini.");
+        }
+      });
+    }, 5000);
+    void refreshPlan().then((active) => {
+      if (active) setMessage("Pembayaran berhasil. Pro aktif selama satu bulan.");
+    });
+    return () => window.clearInterval(timer);
+  }, [refreshPlan]);
+
+  const startCheckout = async () => {
+    setBusy(true);
+    setMessage("");
+    try {
+      const response = await fetch("/api/doku-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Checkout tidak dapat dimulai.");
+      window.location.assign(data.paymentUrl);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Checkout tidak dapat dimulai.");
+      setBusy(false);
+    }
+  };
+
+  const submitFeedback = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setFeedbackBusy(true);
+    setFeedbackNotice("");
+    try {
+      const response = await fetch("/api/pro-feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          type: feedbackType,
+          rating: feedbackType === "review" ? Number(rating) : null,
+          message: feedbackMessage,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Ulasan atau dukungan tidak dapat dikirim.");
+      setFeedbackMessage("");
+      setFeedbackNotice("Terima kasih! Pesanmu sudah terkirim ke dashboard admin.");
+    } catch (error) {
+      setFeedbackNotice(error instanceof Error ? error.message : "Ulasan atau dukungan tidak dapat dikirim.");
+    } finally {
+      setFeedbackBusy(false);
+    }
+  };
 
   return (
     <div className="w-full space-y-8">
@@ -41,7 +118,7 @@ export default function Pricing() {
         </p>
         {isPro && (
           <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
-            <Crown size={14} /> Pro aktif di perangkat ini
+            <Crown size={14} /> Pro aktif sampai {new Date(expiresAt!).toLocaleDateString("id-ID")}
           </p>
         )}
       </div>
@@ -60,17 +137,17 @@ export default function Pricing() {
           </ul>
           <button
             type="button"
-            onClick={() => isPro && deactivatePro()}
-            className={`mt-6 w-full rounded-xl py-2.5 text-sm font-medium ${!isPro ? "bg-gray-100 text-gray-600 dark:bg-gray-800" : "border border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"}`}
+            disabled
+            className="mt-6 w-full rounded-xl bg-gray-100 py-2.5 text-sm font-medium text-gray-600 dark:bg-gray-800"
           >
-            {!isPro ? "Paket saat ini" : "Kembali ke Free"}
+            {isPro ? "Pro aktif" : "Paket Free"}
           </button>
         </div>
 
         <div className="relative rounded-2xl border-2 border-amber-400 bg-gradient-to-b from-amber-50 to-white p-6 shadow-md dark:border-amber-600 dark:from-amber-950/40 dark:to-gray-900">
-          <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-500 px-3 py-1 text-xs font-bold text-white">Demo</span>
+          <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-500 px-3 py-1 text-xs font-bold text-white">Bulanan</span>
           <h2 className="text-lg font-bold text-amber-900 dark:text-amber-100">Pro</h2>
-          <p className="mt-2 text-3xl font-bold">30 hari<span className="text-sm font-normal text-gray-400">/demo gratis</span></p>
+          <p className="mt-2 text-3xl font-bold">Rp25.000<span className="text-sm font-normal text-gray-400">/bulan</span></p>
           <ul className="mt-6 space-y-2.5">
             {PRO_FEATURES.map((feature) => (
               <li key={feature} className="flex items-start gap-2 text-sm">
@@ -79,20 +156,64 @@ export default function Pricing() {
               </li>
             ))}
           </ul>
+          <label className="mt-6 block text-sm font-medium" htmlFor="billing-email">Email untuk kuitansi dan informasi pembayaran</label>
+          <input id="billing-email" type="email" autoComplete="email" required maxLength={128} value={email} onChange={(event) => setEmail(event.target.value)} placeholder="nama@email.com" className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-950" />
           <button
             type="button"
-            disabled={isPro}
-            onClick={() => activatePro(30)}
-            className="mt-6 w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-70"
+            disabled={busy || isPro}
+            onClick={() => void startCheckout()}
+            className="mt-3 w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isPro ? "Pro sudah aktif ✓" : "Aktifkan demo Pro 30 hari"}
+            {isPro ? "Pro sudah aktif" : busy ? "Membuka pembayaran…" : "Bayar Rp25.000 via DOKU"}
           </button>
         </div>
       </div>
 
+      {isPro && (
+        <section className="mx-auto w-full max-w-2xl rounded-2xl border border-amber-200 bg-white p-5 shadow-sm dark:border-amber-900 dark:bg-gray-900 sm:p-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"><MessageSquareText size={20} /></div>
+            <div>
+              <h2 className="font-semibold">Ulasan dan dukungan Pro</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Kirim masukan atau pertanyaan langsung ke admin KuliahBit.</p>
+            </div>
+          </div>
+          <form onSubmit={submitFeedback} className="mt-5 space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="text-sm font-medium">Jenis pesan
+                <select value={feedbackType} onChange={(event) => setFeedbackType(event.target.value as "review" | "support")} className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 dark:border-gray-700 dark:bg-gray-950">
+                  <option value="review">Ulasan</option>
+                  <option value="support">Dukungan / bantuan</option>
+                </select>
+              </label>
+              {feedbackType === "review" && (
+                <label className="text-sm font-medium">Rating
+                  <select value={rating} onChange={(event) => setRating(event.target.value)} className="mt-2 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 dark:border-gray-700 dark:bg-gray-950">
+                    <option value="5">5 — Sangat puas</option>
+                    <option value="4">4 — Puas</option>
+                    <option value="3">3 — Cukup</option>
+                    <option value="2">2 — Kurang puas</option>
+                    <option value="1">1 — Tidak puas</option>
+                  </select>
+                </label>
+              )}
+            </div>
+            <label className="block text-sm font-medium" htmlFor="pro-feedback-message">{feedbackType === "review" ? "Ceritakan pengalamanmu" : "Apa yang bisa kami bantu?"}
+              <textarea id="pro-feedback-message" required minLength={10} maxLength={2000} rows={4} value={feedbackMessage} onChange={(event) => setFeedbackMessage(event.target.value)} placeholder="Tulis pesanmu (10–2.000 karakter)" className="mt-2 w-full resize-y rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-950" />
+            </label>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p role="status" className="text-sm text-amber-700 dark:text-amber-400">{feedbackNotice}</p>
+              <button type="submit" disabled={feedbackBusy} className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60">
+                <Send size={15} /> {feedbackBusy ? "Mengirim…" : "Kirim ke admin"}
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
+
       <div className="space-y-1 text-center text-xs text-gray-400">
-        <p>Pro saat ini hanya simulasi lokal dan belum ada pembayaran atau penagihan.</p>
-        <p>Status paket tersimpan di browser ini dan tidak tersinkron ke perangkat lain.</p>
+        <p>Setiap pembayaran mengaktifkan Pro selama satu bulan. Perpanjangan dilakukan dengan pembayaran berikutnya.</p>
+        {message && <p role="status" className="mx-auto max-w-xl pt-2 text-sm text-amber-700 dark:text-amber-400">{message}</p>}
       </div>
     </div>
   );

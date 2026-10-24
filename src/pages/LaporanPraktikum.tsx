@@ -2,8 +2,16 @@ import { useState } from "react";
 import { Check, Copy, Download, FlaskConical, RotateCcw } from "lucide-react";
 import { usePersistentState } from "../lib/storage";
 
+const IDENTITY_FIELDS = [
+  { key: "nama", label: "Nama praktikan", type: "text" },
+  { key: "nim", label: "NIM", type: "text" },
+  { key: "kelas", label: "Kelas / kelompok", type: "text" },
+  { key: "mataKuliah", label: "Mata kuliah", type: "text" },
+  { key: "dosen", label: "Dosen pengampu", type: "text" },
+  { key: "tanggal", label: "Tanggal praktikum", type: "date" },
+] as const;
+
 const SECTIONS = [
-  { key: "judul", label: "Judul praktikum", hint: "Tulis judul sesuai topik praktikum." },
   { key: "tujuan", label: "Tujuan", hint: "Tuliskan tujuan atau hal yang ingin dibuktikan." },
   { key: "dasar", label: "Dasar teori", hint: "Ringkas konsep dan teori yang mendasari praktikum." },
   { key: "alat", label: "Alat dan bahan", hint: "Pisahkan alat dan bahan dengan baris baru agar mudah dibaca." },
@@ -11,12 +19,19 @@ const SECTIONS = [
   { key: "hasil", label: "Hasil pengamatan dan data", hint: "Masukkan hasil pengamatan, angka, atau data yang diperlukan." },
   { key: "pembahasan", label: "Pembahasan", hint: "Jelaskan makna hasil dan hubungkan dengan teori." },
   { key: "kesimpulan", label: "Kesimpulan", hint: "Jawab tujuan praktikum berdasarkan hasil yang diperoleh." },
-  { key: "saran", label: "Saran (opsional)", hint: "Tambahkan saran untuk perbaikan atau praktikum berikutnya." },
+  { key: "pustaka", label: "Daftar pustaka", hint: "Cantumkan sumber teori atau data dengan format sitasi yang konsisten." },
+  { key: "saran", label: "Saran (opsional)", hint: "Tambahkan saran untuk perbaikan atau praktikum berikutnya.", optional: true },
 ] as const;
 
-type Fields = Record<(typeof SECTIONS)[number]["key"], string>;
+type Fields = Record<(typeof IDENTITY_FIELDS)[number]["key"] | "judul" | (typeof SECTIONS)[number]["key"], string>;
 
 const empty: Fields = {
+  nama: "",
+  nim: "",
+  kelas: "",
+  mataKuliah: "",
+  dosen: "",
+  tanggal: "",
   judul: "",
   tujuan: "",
   dasar: "",
@@ -25,22 +40,34 @@ const empty: Fields = {
   hasil: "",
   pembahasan: "",
   kesimpulan: "",
+  pustaka: "",
   saran: "",
 };
 
 export default function LaporanPraktikum() {
-  const [fields, setFields] = usePersistentState<Fields>("draft-laporan-praktikum", { ...empty });
+  const [storedFields, setFields] = usePersistentState<Partial<Fields>>("draft-laporan-praktikum", { ...empty });
+  const fields = { ...empty, ...storedFields };
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
-  const filledSections = SECTIONS.filter((section) => fields[section.key].trim()).length;
+  const requiredSections = SECTIONS.filter((section) => !("optional" in section && section.optional));
+  const filledSections = requiredSections.filter((section) => fields[section.key].trim()).length;
   const wordCount = Object.values(fields).join(" ").trim().split(/\s+/).filter(Boolean).length;
+  const hasContent = Object.values(fields).some((value) => value.trim());
 
   const buildText = () => {
-    const lines: string[] = ["LAPORAN PRAKTIKUM", ""];
+    const lines: string[] = [
+      "LAPORAN PRAKTIKUM",
+      fields.judul.trim() || "(belum diisi)",
+      "",
+      "IDENTITAS PRAKTIKAN",
+      ...IDENTITY_FIELDS.map(({ key, label }) => `${label}: ${fields[key].trim() || "(belum diisi)"}`),
+      "",
+    ];
     SECTIONS.forEach((section) => {
       const value = fields[section.key].trim();
-      if (!value && section.key === "saran") return;
-      lines.push(section.label.toUpperCase());
+      if (!value && "optional" in section && section.optional) return;
+      const number = SECTIONS.indexOf(section) + 1;
+      lines.push(`${String(number).padStart(2, "0")}. ${section.label.toUpperCase()}`);
       lines.push(value || "(belum diisi)");
       lines.push("");
     });
@@ -70,7 +97,7 @@ export default function LaporanPraktikum() {
   };
 
   const handleReset = () => {
-    if (filledSections === 0 || window.confirm("Kosongkan semua isian laporan ini?")) setFields({ ...empty });
+    if (!hasContent || window.confirm("Kosongkan semua isian laporan ini?")) setFields({ ...empty });
   };
 
   return (
@@ -85,13 +112,44 @@ export default function LaporanPraktikum() {
         </p>
       </header>
 
+      <section className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 sm:p-5">
+        <h2 className="mb-1 text-sm font-semibold text-gray-800 dark:text-gray-200">Identitas praktikan</h2>
+        <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">Lengkapi data yang diperlukan sesuai format dari dosen atau kampus.</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {IDENTITY_FIELDS.map((field) => (
+            <label key={field.key} htmlFor={`report-${field.key}`} className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {field.label}
+              <input
+                id={`report-${field.key}`}
+                type={field.type}
+                value={fields[field.key]}
+                onChange={(event) => setFields({ ...fields, [field.key]: event.target.value })}
+                className="mt-1.5 w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm font-normal focus:outline-none focus:ring-2 focus:ring-teal-500 dark:border-gray-700 dark:bg-gray-950"
+              />
+            </label>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 sm:p-5">
+        <label htmlFor="report-judul" className="mb-1 block text-sm font-semibold text-gray-800 dark:text-gray-200">Judul praktikum</label>
+        <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">Tulis judul sesuai topik praktikum.</p>
+        <input
+          id="report-judul"
+          value={fields.judul}
+          onChange={(event) => setFields({ ...fields, judul: event.target.value })}
+          className="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:border-gray-700 dark:bg-gray-950"
+          placeholder="Contoh: Pengaruh suhu terhadap laju reaksi"
+        />
+      </section>
+
       <section aria-label="Progres laporan" className="rounded-2xl border border-teal-100 bg-teal-50/70 p-4 dark:border-teal-900/60 dark:bg-teal-950/20">
         <div className="flex items-center justify-between gap-3 text-sm">
           <span className="font-medium text-teal-900 dark:text-teal-100">Progres laporan</span>
-          <span className="text-teal-700 dark:text-teal-300">{filledSections}/{SECTIONS.length} bagian · {wordCount} kata</span>
+          <span className="text-teal-700 dark:text-teal-300">{filledSections}/{requiredSections.length} bagian wajib · {wordCount} kata</span>
         </div>
         <div className="mt-2 h-2 overflow-hidden rounded-full bg-teal-100 dark:bg-teal-900/60">
-          <div className="h-full rounded-full bg-teal-500 transition-all" style={{ width: `${(filledSections / SECTIONS.length) * 100}%` }} />
+          <div className="h-full rounded-full bg-teal-500 transition-all" style={{ width: `${(filledSections / requiredSections.length) * 100}%` }} />
         </div>
       </section>
 
@@ -103,24 +161,14 @@ export default function LaporanPraktikum() {
               {section.label}
             </label>
             <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">{section.hint}</p>
-            {section.key === "judul" ? (
-              <input
-                id={`report-${section.key}`}
-                value={fields[section.key]}
-                onChange={(event) => setFields({ ...fields, [section.key]: event.target.value })}
-                className="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 dark:border-gray-700 dark:bg-gray-950"
-                placeholder="Contoh: Pengaruh suhu terhadap laju reaksi"
-              />
-            ) : (
-              <textarea
-                id={`report-${section.key}`}
-                value={fields[section.key]}
-                onChange={(event) => setFields({ ...fields, [section.key]: event.target.value })}
-                rows={section.key === "langkah" || section.key === "pembahasan" || section.key === "hasil" ? 5 : 3}
-                className="w-full resize-y rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-teal-500 dark:border-gray-700 dark:bg-gray-950"
-                placeholder={`Tulis ${section.label.toLowerCase()} di sini...`}
-              />
-            )}
+            <textarea
+              id={`report-${section.key}`}
+              value={fields[section.key]}
+              onChange={(event) => setFields({ ...fields, [section.key]: event.target.value })}
+              rows={section.key === "langkah" || section.key === "pembahasan" || section.key === "hasil" || section.key === "pustaka" ? 5 : 3}
+              className="w-full resize-y rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm leading-relaxed focus:outline-none focus:ring-2 focus:ring-teal-500 dark:border-gray-700 dark:bg-gray-950"
+              placeholder={`Tulis ${section.label.toLowerCase()} di sini...`}
+            />
           </section>
         ))}
       </div>
@@ -129,7 +177,7 @@ export default function LaporanPraktikum() {
         <button
           type="button"
           onClick={handleCopy}
-          disabled={filledSections === 0}
+          disabled={!hasContent}
           className="flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {copied ? <Check size={16} /> : <Copy size={16} />}
@@ -138,7 +186,7 @@ export default function LaporanPraktikum() {
         <button
           type="button"
           onClick={handleDownload}
-          disabled={filledSections === 0}
+          disabled={!hasContent}
           className="flex items-center gap-2 rounded-xl border border-gray-300 px-5 py-2.5 text-sm font-semibold hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:hover:bg-gray-800"
         >
           <Download size={16} /> Unduh .txt
@@ -146,7 +194,7 @@ export default function LaporanPraktikum() {
         <button
           type="button"
           onClick={handleReset}
-          disabled={filledSections === 0}
+          disabled={!hasContent}
           className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-gray-500 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <RotateCcw size={15} /> Reset

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import Sidebar from "./components/layout/Sidebar";
 import Header from "./components/layout/Header";
@@ -13,7 +13,6 @@ import Pricing from "./pages/Pricing";
 import Settings from "./pages/Settings";
 import Agenda from "./pages/Agenda";
 import Converter from "./pages/Converter";
-import NilaiAkhir from "./pages/NilaiAkhir";
 import Cram from "./pages/Cram";
 import SlidePresentasi from "./pages/SlidePresentasi";
 import CVBuilder from "./pages/CVBuilder";
@@ -25,6 +24,7 @@ import TanyaAI from "./pages/TanyaAI";
 import BeasiswaTracker from "./pages/BeasiswaTracker";
 import LaporanPraktikum from "./pages/LaporanPraktikum";
 import UjianMingguIni from "./pages/UjianMingguIni";
+import AdminPayments from "./pages/AdminPayments";
 
 function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -67,6 +67,7 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/dashboard" element={<AppShell><Dashboard /></AppShell>} />
         <Route path="/tugas" element={<AppShell><Tugas /></AppShell>} />
+        <Route path="/habit" element={<Navigate to="/dashboard" replace />} />
         <Route path="/agenda" element={<AppShell><Agenda /></AppShell>} />
         <Route path="/flashcards" element={<AppShell><Flashcards /></AppShell>} />
         <Route path="/quiz" element={<AppShell><Quiz /></AppShell>} />
@@ -78,7 +79,7 @@ function App() {
         <Route path="/cram" element={<AppShell><Cram /></AppShell>} />
         <Route path="/notes" element={<AppShell><Notes /></AppShell>} />
         <Route path="/converter" element={<AppShell><Converter /></AppShell>} />
-        <Route path="/nilai-akhir" element={<AppShell><NilaiAkhir /></AppShell>} />
+        <Route path="/nilai-akhir" element={<Navigate to="/dashboard" replace />} />
         <Route path="/slides" element={<AppShell><SlidePresentasi /></AppShell>} />
         <Route path="/cv" element={<AppShell><CVBuilder /></AppShell>} />
         <Route path="/surat" element={<AppShell><SuratKilat /></AppShell>} />
@@ -87,6 +88,7 @@ function App() {
         <Route path="/absensi" element={<AppShell><Absensi /></AppShell>} />
         <Route path="/pricing" element={<AppShell><Pricing /></AppShell>} />
         <Route path="/settings" element={<AppShell><Settings /></AppShell>} />
+        <Route path="/admin/pembayaran" element={<AdminPayments />} />
       </Routes>
     </BrowserRouter>
   );

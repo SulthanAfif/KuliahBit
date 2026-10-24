@@ -111,7 +111,7 @@ export default function TanyaAI() {
 
   const sendChat = async () => {
     if (!input.trim()) return;
-    if (!canUse) {
+    if (!isPro && getAiUsageThisMonth() >= FREE_LIMITS.aiPerMonth) {
       navigate("/pricing");
       return;
     }
@@ -155,7 +155,7 @@ export default function TanyaAI() {
       setError("Isi materi / PDF dulu.");
       return;
     }
-    if (!canUse) {
+    if (!isPro && getAiUsageThisMonth() >= FREE_LIMITS.aiPerMonth) {
       navigate("/pricing");
       return;
     }
@@ -200,7 +200,7 @@ export default function TanyaAI() {
 
   const submitAnswer = async () => {
     if (!answer.trim() || !qList[qIndex]) return;
-    if (!canUse) {
+    if (!isPro && getAiUsageThisMonth() >= FREE_LIMITS.aiPerMonth) {
       navigate("/pricing");
       return;
     }
@@ -225,7 +225,7 @@ export default function TanyaAI() {
 
   const runExplain = async () => {
     if (!term.trim()) return;
-    if (!canUse) {
+    if (!isPro && getAiUsageThisMonth() >= FREE_LIMITS.aiPerMonth) {
       navigate("/pricing");
       return;
     }
@@ -387,7 +387,7 @@ export default function TanyaAI() {
             />
             <button
               onClick={sendChat}
-              disabled={loading || !input.trim() || !canUse}
+              disabled={loading || !input.trim()}
               className="rounded-xl bg-indigo-600 text-white px-4 py-2.5 disabled:opacity-50 hover:bg-indigo-700"
             >
               {!canUse ? <Lock size={18} /> : <Send size={18} />}
@@ -401,7 +401,7 @@ export default function TanyaAI() {
         <div className="space-y-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
           <button
             onClick={startBelajar}
-            disabled={loading || !canUse}
+            disabled={loading}
             className="bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
           >
             {loading ? "Membuat soal..." : "Buat 10 pertanyaan dari materi"}
@@ -470,7 +470,7 @@ export default function TanyaAI() {
             />
             <button
               onClick={runExplain}
-              disabled={loading || !term.trim() || !canUse}
+              disabled={loading || !term.trim()}
               className="bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm disabled:opacity-50"
             >
               Jelaskan

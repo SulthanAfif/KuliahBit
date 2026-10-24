@@ -444,7 +444,11 @@ export default function SlidePresentasi() {
   };
 
   const downloadPdf = async () => {
-    if (!canUseFeature(isPro, "pdfExports") || slides.length === 0) return;
+    if (!canUseFeature(isPro, "pdfExports")) {
+      navigate("/pricing");
+      return;
+    }
+    if (slides.length === 0) return;
     setDownloading(true);
     setError(null);
     const exportRoot = document.createElement("div");
@@ -776,7 +780,7 @@ export default function SlidePresentasi() {
         </button>
         <button
           onClick={downloadPdf}
-          disabled={downloading || slides.length === 0 || !canUseFeature(isPro, "pdfExports")}
+          disabled={downloading || slides.length === 0}
           className="flex items-center gap-2 bg-rose-600 text-white px-5 py-2.5 rounded-xl text-sm font-medium hover:bg-rose-700 disabled:opacity-50"
         >
           {downloading ? (

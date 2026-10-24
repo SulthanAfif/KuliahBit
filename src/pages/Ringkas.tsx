@@ -97,7 +97,7 @@ export default function Ringkas() {
 
   const handleGenerate = async () => {
     if (!text.trim()) return;
-    if (!canUse) {
+    if (!isPro && getAiUsageThisMonth() >= FREE_LIMITS.aiPerMonth) {
       navigate("/pricing");
       return;
     }
@@ -177,7 +177,7 @@ export default function Ringkas() {
   /** Satu tombol: ringkas + flashcard + soal, simpan otomatis */
   const handleGenerateAll = async () => {
     if (!text.trim()) return;
-    if (!isPro && aiUsage + 3 > FREE_LIMITS.aiPerMonth) {
+    if (!isPro && getAiUsageThisMonth() + 3 > FREE_LIMITS.aiPerMonth) {
       navigate("/pricing");
       return;
     }
@@ -193,11 +193,6 @@ export default function Ringkas() {
         ringkasOut = await generateAI("ringkas", text);
         flashOut = await generateAI("flashcard", text);
         soalOut = await generateAI("soal", text);
-        if (!isPro) {
-          incrementAiUsage();
-          incrementAiUsage();
-          incrementAiUsage();
-        }
       } else {
         await new Promise((r) => setTimeout(r, 800));
         ringkasOut =
@@ -212,6 +207,11 @@ export default function Ringkas() {
           "DEAPAN: Apa topik utama?\nBELAKANG: (dari materi)\n\nDEAPAN: Sebutkan satu poin penting\nBELAKANG: (dari materi)";
         soalOut =
           "1. Apa topik utama teks?\nA. Opsi A\nB. Opsi B\nC. Opsi C\nD. Opsi D\nJawaban: A";
+      }
+      if (!isPro) {
+        incrementAiUsage();
+        incrementAiUsage();
+        incrementAiUsage();
       }
 
       setResult(
@@ -459,7 +459,7 @@ export default function Ringkas() {
       <div className="flex flex-wrap gap-3 items-center">
         <button
           onClick={handleGenerate}
-          disabled={loading || !text.trim() || !canUse}
+          disabled={loading || !text.trim()}
           className="flex items-center gap-2 bg-purple-600 text-white px-6 py-2.5 rounded-xl hover:bg-purple-700 disabled:opacity-50 text-sm font-medium transition"
         >
           {loading ? (
@@ -479,7 +479,7 @@ export default function Ringkas() {
 
         <button
           onClick={handleGenerateAll}
-          disabled={loading || !text.trim() || !canUse}
+          disabled={loading || !text.trim()}
           className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium transition"
           title="Ringkas + flashcard + soal sekaligus"
         >

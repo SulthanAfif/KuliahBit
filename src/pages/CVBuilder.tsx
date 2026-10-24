@@ -71,7 +71,10 @@ export default function CVBuilder() {
   const canExportPdf = canUseFeature(isPro, "pdfExports");
 
   const exportCv = (action: () => void) => {
-    if (!canUseFeature(isPro, "cvExports")) return;
+    if (!canUseFeature(isPro, "cvExports")) {
+      navigate("/pricing");
+      return;
+    }
     action();
     if (!isPro) {
       incrementFeatureUsage("cvExports");
@@ -80,7 +83,10 @@ export default function CVBuilder() {
   };
 
   const exportPdf = () => {
-    if (!canUseFeature(isPro, "pdfExports")) return;
+    if (!canUseFeature(isPro, "pdfExports")) {
+      navigate("/pricing");
+      return;
+    }
     window.print();
     if (!isPro) {
       incrementFeatureUsage("pdfExports");
@@ -185,12 +191,11 @@ export default function CVBuilder() {
         <div className="flex w-full shrink-0 flex-wrap gap-2 print:hidden sm:w-auto">
           <button
             onClick={() => exportCv(downloadTxt)}
-            disabled={!canExport}
             className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2.5 rounded-xl text-sm hover:bg-slate-900"
           >
             <Download size={16} /> Unduh teks
           </button>
-          <button onClick={exportPdf} disabled={!canExportPdf} className="flex items-center gap-2 rounded-xl bg-slate-600 px-4 py-2.5 text-sm text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50">
+          <button onClick={exportPdf} className="flex items-center gap-2 rounded-xl bg-slate-600 px-4 py-2.5 text-sm text-white hover:bg-slate-700">
             <Printer size={16} /> Cetak / PDF
           </button>
         </div>

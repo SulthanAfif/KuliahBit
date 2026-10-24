@@ -1,6 +1,6 @@
 # KuliahBit
 
-> KuliahBit adalah aplikasi web berbahasa Indonesia berisi alat belajar dan produktivitas akademik untuk mahasiswa. Pengguna dapat mencatat tugas, mengelola agenda, belajar dari materi, menghitung nilai, serta menyiapkan dokumen kuliah.
+> KuliahBit adalah aplikasi web berbahasa Indonesia berisi alat belajar dan produktivitas akademik untuk mahasiswa. Pengguna dapat mencatat tugas, mengelola agenda, belajar dari materi, serta menyiapkan dokumen kuliah.
 
 ## Tentang aplikasi
 
@@ -38,7 +38,7 @@ KuliahBit menggabungkan beberapa alat kuliah dalam satu antarmuka browser. Aplik
 - `/slides` — menyusun dan mengedit slide presentasi, melihat pratinjau, lalu mengekspor hasil sesuai pilihan format yang tersedia.
 - `/cv` — menyusun CV berisi informasi diri, pendidikan, pengalaman, sertifikasi, bahasa, organisasi, keahlian, dan proyek; halaman menyediakan pratinjau serta ekspor.
 - `/surat` — mengisi format surat dan memeriksa pratinjau sebelum mengunduh.
-- `/laporan-praktikum` — mengisi bagian laporan praktikum dan menyimpan hasil sebagai berkas teks.
+- `/laporan-praktikum` — menyusun identitas praktikan, struktur laporan, dan daftar pustaka; draft tersimpan otomatis serta hasil dapat disalin atau diunduh sebagai berkas teks.
 - `/citation` — menyusun dan menyimpan sitasi dari data sumber.
 - `/parafrase` — meminta bantuan menulis ulang teks.
 - `/converter` — membuka alat konversi berkas yang tersedia di aplikasi.
@@ -66,14 +66,13 @@ KuliahBit menggabungkan beberapa alat kuliah dalam satu antarmuka browser. Aplik
 - `/agenda` — agenda dengan jenis acara UTS, UAS, deadline, bimbingan, atau lainnya.
 - `/ujian-minggu-ini` — rangkuman tujuh hari yang menampilkan tugas dekat, agenda mendatang, serta flashcard yang perlu diulang.
 - `/absensi` — pencatatan dan rekap kehadiran.
-- `/nilai-akhir` — kalkulasi nilai akhir dari nilai komponen dan bobot.
 - `/beasiswa` — pelacakan beasiswa, magang, dan lomba, termasuk tenggat dan status pendaftaran.
 
 ### Paket
 
 - `/pricing` — perbandingan paket Free dan Pro.
 - Paket Free tersedia tanpa biaya dan memiliki kuota untuk beberapa alat.
-- Paket Pro pada implementasi saat ini berupa simulasi lokal selama 30 hari. Harga yang ditampilkan adalah contoh; pembayaran dan verifikasi langganan dari server belum terhubung.
+- Harga paket Pro adalah Rp25.000 per bulan. Backend checkout dan verifikasi notifikasi DOKU tersedia, tetapi memerlukan kredensial merchant serta konfigurasi database sebelum pembayaran dapat digunakan.
 
 ## Batas penggunaan Free
 
@@ -81,14 +80,14 @@ Kuota berikut didefinisikan dalam implementasi saat ini dan penghitungannya disi
 
 | Fitur | Kuota Free |
 | --- | --- |
-| Generate AI | 3 kali per bulan |
-| Impor PDF | 3 kali per bulan; ukuran maksimal 10 MB dan teks maksimal 30.000 karakter per berkas |
-| Unduh PDF lintas fitur | 3 kali per bulan total |
-| Ekspor CV sebagai teks | 3 kali per bulan |
-| Set flashcard dan jumlah kartu | 3 set dan 3 kartu total |
-| Set kuis dan jumlah soal | 3 set dan 3 soal total |
-| Item bank soal atau materi | 3 item per bulan |
-| Catatan baru | 3 item per bulan |
+| Generate AI | 5 kali per bulan |
+| Impor PDF | 5 kali per bulan; ukuran maksimal 10 MB dan teks maksimal 30.000 karakter per berkas |
+| Unduh PDF lintas fitur | 5 kali per bulan total |
+| Ekspor CV sebagai teks | 5 kali per bulan |
+| Set flashcard dan jumlah kartu | 5 set dan 5 kartu total |
+| Set kuis dan jumlah soal | 5 set dan 5 soal total |
+| Item bank soal atau materi | 5 item per bulan |
+| Catatan baru | 5 item per bulan |
 
 Paket Pro menghapus kuota bulanan untuk fitur yang dibatasi dan meningkatkan batas impor PDF menjadi 20 MB serta 100.000 karakter teks per berkas. Batas aktual dapat berubah jika implementasi aplikasi diperbarui. Saat kuota tercapai, aplikasi dapat menawarkan halaman `/pricing`.
 
@@ -117,7 +116,7 @@ Tidak. Periksa kembali hasil AI, bobot nilai, sitasi, isi dokumen, dan ketentuan
 
 ### Apakah KuliahBit sudah menerima pembayaran Pro?
 
-Belum. Aktivasi Pro saat ini simulasi lokal di browser; belum ada pembayaran atau pemeriksaan langganan dari server.
+Backend pembayaran DOKU sudah disiapkan. Checkout baru dapat digunakan setelah kredensial DOKU dan database server dikonfigurasi. Harga Pro Rp25.000 per bulan.
 
 ## Referensi proyek
 

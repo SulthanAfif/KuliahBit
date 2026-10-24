@@ -16,6 +16,7 @@ export interface Task {
   status: 'todo' | 'in_progress' | 'done';
   priority: 'low' | 'medium' | 'high';
   createdAt: string;
+  completedAt?: string;
 }
 
 export interface Flashcard {

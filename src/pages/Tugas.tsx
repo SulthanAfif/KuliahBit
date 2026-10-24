@@ -48,7 +48,11 @@ export default function Tugas() {
     setTasks(
       tasks.map((t) =>
         t.id === id
-          ? { ...t, status: t.status === "done" ? "todo" : "done" }
+          ? {
+              ...t,
+              status: t.status === "done" ? "todo" : "done",
+              completedAt: t.status === "done" ? undefined : new Date().toISOString(),
+            }
           : t
       )
     );
