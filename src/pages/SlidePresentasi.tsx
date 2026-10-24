@@ -206,6 +206,54 @@ function LayoutThumbnail({ layout }: { layout: LayoutId }) {
   );
 }
 
+function inlinePdfStyles(root: HTMLElement) {
+  const elements = [root, ...Array.from(root.querySelectorAll<HTMLElement>("*"))];
+  const styles = elements.map((element) => {
+    const computed = getComputedStyle(element);
+    return Array.from(computed, (property) => [
+      property,
+      convertOklabColorToRgb(computed.getPropertyValue(property)),
+    ] as const);
+  });
+
+  elements.forEach((element, index) => {
+    element.removeAttribute("class");
+    element.style.cssText = "";
+    styles[index].forEach(([property, value]) => element.style.setProperty(property, value));
+  });
+
+  root.style.position = "relative";
+  root.style.left = "auto";
+  root.style.top = "auto";
+  root.style.zIndex = "auto";
+}
+
+function convertOklabColorToRgb(value: string) {
+  return value.replace(/oklch\(([^)]+)\)|oklab\(([^)]+)\)/gi, (_color, oklchChannels: string | undefined, oklabChannels: string | undefined) => {
+    const isOklch = Boolean(oklchChannels);
+    const channels = oklchChannels || oklabChannels || "";
+    const [components, alphaValue] = channels.split("/");
+    const [lightnessValue, chromaValue, hueValue] = components.trim().split(/[\s,]+/);
+    const lightness = Number.parseFloat(lightnessValue) / (lightnessValue.endsWith("%") ? 100 : 1);
+    const second = Number.parseFloat(chromaValue) * (chromaValue.endsWith("%") ? 0.004 : 1);
+    const third = Number.parseFloat(hueValue) * (hueValue.endsWith("%") ? 0.004 : 1);
+    const a = isOklch ? second * Math.cos(third * Math.PI / 180) : second;
+    const b = isOklch ? second * Math.sin(third * Math.PI / 180) : third;
+    const l = (lightness + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+    const m = (lightness - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+    const s = (lightness - 0.0894841775 * a - 1.291485548 * b) ** 3;
+    const toSrgb = (linear: number) => {
+      const clamped = Math.max(0, Math.min(1, linear));
+      return Math.round(255 * (clamped <= 0.0031308 ? 12.92 * clamped : 1.055 * clamped ** (1 / 2.4) - 0.055));
+    };
+    const red = toSrgb(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s);
+    const green = toSrgb(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s);
+    const blue = toSrgb(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s);
+    const alpha = alphaValue ? Number.parseFloat(alphaValue.trim()) / (alphaValue.includes("%") ? 100 : 1) : 1;
+    return alpha < 1 ? `rgba(${red}, ${green}, ${blue}, ${alpha})` : `rgb(${red}, ${green}, ${blue})`;
+  });
+}
+
 function loadImageMaterial(file: File): Promise<MaterialImage> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -452,15 +500,16 @@ export default function SlidePresentasi() {
     setDownloading(true);
     setError(null);
     const exportRoot = document.createElement("div");
-    exportRoot.style.cssText = "position:fixed;left:0;top:0;width:1280px;background:#ffffff;z-index:-100;pointer-events:none;";
+    exportRoot.style.cssText = "position:fixed;left:-10000px;top:0;width:1280px;background:#ffffff;pointer-events:none;";
     try {
       const { renderToStaticMarkup } = await import("react-dom/server");
       const html2pdfModule = await import("html2pdf.js");
       const html2pdf = (html2pdfModule as any).default || html2pdfModule;
+      const { jsPDF } = await import("jspdf");
 
       slides.forEach((slide, index) => {
         const page = document.createElement("div");
-        page.style.cssText = `width:1280px;height:720px;page-break-after:${index < slides.length - 1 ? "always" : "auto"};break-after:${index < slides.length - 1 ? "page" : "auto"};overflow:hidden;`;
+        page.style.cssText = "width:1280px;height:720px;overflow:hidden;";
         page.innerHTML = renderToStaticMarkup(
           <SlidePreview
             slide={slide}
@@ -482,22 +531,50 @@ export default function SlidePresentasi() {
       });
 
       document.body.appendChild(exportRoot);
+      inlinePdfStyles(exportRoot);
+      const pdf = new jsPDF({
+        unit: "mm",
+        format: [338.6667, 190.5],
+        orientation: "landscape",
+      });
       const filename = `${(topic || slides[0]?.title || "presentasi")
         .replace(/[^\w\s\-]/g, "")
         .trim()
         .slice(0, 40) || "presentasi"}.pdf`;
 
-      await html2pdf()
-        .set({
-          margin: 0,
-          filename,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 1.5, useCORS: true, backgroundColor: null, logging: false, windowWidth: 1280 },
-          jsPDF: { unit: "mm", format: [338.67, 190.5], orientation: "landscape" },
-          pagebreak: { mode: ["css", "legacy"] },
-        })
-        .from(exportRoot)
-        .save();
+      for (const [index, page] of Array.from(exportRoot.children).entries()) {
+        const canvas = await html2pdf()
+          .set({
+            margin: 0,
+            image: { type: "jpeg", quality: 0.98 },
+            html2canvas: { scale: 1.5, useCORS: true, backgroundColor: null, logging: false, windowWidth: 1280 },
+            jsPDF: { unit: "mm", format: [338.6667, 190.5], orientation: "landscape" },
+          })
+          .from(page)
+          .toCanvas()
+          .get("canvas") as HTMLCanvasElement;
+        const context = canvas.getContext("2d");
+        if (!context || canvas.width === 0 || canvas.height === 0) {
+          throw new Error(`Slide ${index + 1} kosong dan tidak dapat dimasukkan ke PDF.`);
+        }
+        const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+        let hasSlideContent = false;
+        for (let offset = 0; offset < pixels.length; offset += 16) {
+          if (pixels[offset] < 245 || pixels[offset + 1] < 245 || pixels[offset + 2] < 245) {
+            hasSlideContent = true;
+            break;
+          }
+        }
+        if (!hasSlideContent) {
+          throw new Error(`Slide ${index + 1} kosong dan tidak dapat dimasukkan ke PDF.`);
+        }
+        if (index > 0) pdf.addPage([338.6667, 190.5], "landscape");
+        pdf.addImage(canvas.toDataURL("image/jpeg", 0.98), "JPEG", 0, 0, 338.6667, 190.5);
+      }
+      if (pdf.getNumberOfPages() !== slides.length) {
+        throw new Error("Jumlah halaman PDF tidak sesuai dengan jumlah slide.");
+      }
+      pdf.save(filename);
       if (!isPro) {
         incrementFeatureUsage("pdfExports");
         setUsageRefresh((value) => value + 1);
@@ -590,7 +667,7 @@ export default function SlidePresentasi() {
         )}
       </div>
 
-      <section className="grid gap-5 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+      <section className="grid gap-5 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-start">
         <div className="min-w-0">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
@@ -612,25 +689,6 @@ export default function SlidePresentasi() {
             {slides.map((slide, index) => (
               <button key={slide.id} onClick={() => setPreviewIndex(index)} aria-label={`Lihat slide ${index + 1}`} className={`shrink-0 rounded-md border-2 p-0.5 ${previewIndex === index ? "border-rose-500" : "border-transparent"}`}>
                 <div className="w-20 sm:w-24"><SlidePreview slide={slide} index={index} total={slides.length} template={selectedTemplate} layout={layoutId} fontFamily={fontFamily} fontSizes={fontSizes} compact /></div>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="min-w-0">
-          <h2 className="font-semibold">Pilih template</h2>
-          <p className="mb-3 mt-0.5 text-xs text-gray-500 dark:text-gray-400">Pilih desain untuk pratinjau dan file PPTX.</p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {TEMPLATES.map((template) => (
-              <button
-                key={template.id}
-                onClick={() => setTemplateId(template.id)}
-                aria-pressed={templateId === template.id}
-                className={`rounded-xl border p-2 text-left transition ${templateId === template.id ? "border-rose-500 ring-2 ring-rose-500/15" : "border-gray-200 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-500"}`}
-              >
-                <SlidePreview slide={slides[previewIndex] || slides[0]} index={previewIndex} total={slides.length} template={template} layout={layoutId} fontFamily={fontFamily} fontSizes={fontSizes} compact />
-                <span className="mt-2 block text-sm font-semibold">{template.name}</span>
-                <span className="mt-0.5 block text-[11px] leading-snug text-gray-500 dark:text-gray-400">{template.description}</span>
               </button>
             ))}
           </div>
@@ -672,8 +730,27 @@ export default function SlidePresentasi() {
                 ))}
               </div>
             </div>
+            <p className="mt-2 text-[11px] text-gray-400">Template, font, dan tata letak diterapkan ke semua slide dan file PPTX.</p>
           </div>
-          <p className="mt-2 text-[11px] text-gray-400">Template, font, dan tata letak diterapkan ke semua slide dan file PPTX.</p>
+        </div>
+
+        <div className="min-w-0">
+          <h2 className="font-semibold">Pilih template</h2>
+          <p className="mb-3 mt-0.5 text-xs text-gray-500 dark:text-gray-400">Pilih desain untuk pratinjau dan file PPTX.</p>
+          <div className="grid grid-cols-2 gap-3">
+            {TEMPLATES.map((template) => (
+              <button
+                key={template.id}
+                onClick={() => setTemplateId(template.id)}
+                aria-pressed={templateId === template.id}
+                className={`rounded-xl border p-2 text-left transition ${templateId === template.id ? "border-rose-500 ring-2 ring-rose-500/15" : "border-gray-200 hover:border-gray-400 dark:border-gray-700 dark:hover:border-gray-500"}`}
+              >
+                <SlidePreview slide={slides[previewIndex] || slides[0]} index={previewIndex} total={slides.length} template={template} layout={layoutId} fontFamily={fontFamily} fontSizes={fontSizes} compact />
+                <span className="mt-2 block text-sm font-semibold">{template.name}</span>
+                <span className="mt-0.5 block text-[11px] leading-snug text-gray-500 dark:text-gray-400">{template.description}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
