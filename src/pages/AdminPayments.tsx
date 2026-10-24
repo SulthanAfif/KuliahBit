@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { BarChart3, CircleDollarSign, KeyRound, LogOut, MessageSquareText, RefreshCw, Search, ShieldCheck } from "lucide-react";
+import { BarChart3, CircleDollarSign, KeyRound, LogOut, MessageSquareText, RefreshCw, Search, ShieldCheck, Star, TrendingUp, Users, Wallet } from "lucide-react";
 import { ADMIN_AUTH_CHANGED_EVENT } from "../context/PlanContext";
 
 type Payment = {
@@ -23,6 +23,28 @@ type Feedback = {
   message: string;
   created_at: string;
 };
+type Insights = {
+  revenue: {
+    total: number;
+    byMonth: { label: string; total: number }[];
+  };
+  transactions: {
+    total: number;
+    paid: number;
+    pending: number;
+    failed: number;
+    conversionRate: number;
+  };
+  subscribers: { active: number };
+  feedback: {
+    avgRating: number | null;
+    reviewCount: number;
+    supportCount: number;
+    topUniversities: { name: string; count: number }[];
+    topMajors: { name: string; count: number }[];
+  };
+};
+
 type DailyUsage = { date: string; views: number; interactions: number };
 type PageUsage = { path: string; views: number; interactions: number };
 type UsageAnalytics = {
@@ -116,6 +138,9 @@ export default function AdminPayments() {
   const [analytics, setAnalytics] = useState<UsageAnalytics | null>(null);
   const [analyticsBusy, setAnalyticsBusy] = useState(false);
   const [analyticsError, setAnalyticsError] = useState("");
+  const [insights, setInsights] = useState<Insights | null>(null);
+  const [insightsBusy, setInsightsBusy] = useState(false);
+  const [insightsError, setInsightsError] = useState("");
 
   const loadPayments = useCallback(async (pageOffset = 0) => {
     if (!authenticated) return;
@@ -190,6 +215,29 @@ export default function AdminPayments() {
     }
   }, [authenticated]);
 
+  const loadInsights = useCallback(async () => {
+    if (!authenticated) return;
+    setInsightsBusy(true);
+    setInsightsError("");
+    try {
+      const response = await fetch("/api/admin-insights", { cache: "no-store", credentials: "same-origin" });
+      const data = await response.json();
+      if (response.status === 401) {
+        sessionStorage.removeItem(AUTH_KEY);
+        setAuthenticated(false);
+        setInsights(null);
+        notifyAdminAuthChanged();
+        throw new Error("Token admin tidak valid atau sudah tidak aktif.");
+      }
+      if (!response.ok) throw new Error(data.error || "Gagal memuat insight.");
+      setInsights(data as Insights);
+    } catch (err) {
+      setInsightsError(err instanceof Error ? err.message : "Gagal memuat insight.");
+    } finally {
+      setInsightsBusy(false);
+    }
+  }, [authenticated]);
+
   useEffect(() => {
     if (authenticated) void loadPayments(0);
   }, [authenticated, query, status, loadPayments]);
@@ -203,6 +251,10 @@ export default function AdminPayments() {
   }, [authenticated, loadAnalytics]);
 
   useEffect(() => {
+    if (authenticated) void loadInsights();
+  }, [authenticated, loadInsights]);
+
+  useEffect(() => {
     if (!authenticated) return;
     const interval = window.setInterval(() => void loadFeedback(), 15_000);
     return () => window.clearInterval(interval);
@@ -213,6 +265,12 @@ export default function AdminPayments() {
     const interval = window.setInterval(() => void loadAnalytics(), 60_000);
     return () => window.clearInterval(interval);
   }, [authenticated, loadAnalytics]);
+
+  useEffect(() => {
+    if (!authenticated) return;
+    const interval = window.setInterval(() => void loadInsights(), 60_000);
+    return () => window.clearInterval(interval);
+  }, [authenticated, loadInsights]);
 
   const submitToken = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -246,6 +304,7 @@ export default function AdminPayments() {
     setPayments([]);
     setFeedback([]);
     setAnalytics(null);
+    setInsights(null);
     setTotal(0);
     await fetch("/api/admin-logout", { method: "POST", credentials: "same-origin" });
     notifyAdminAuthChanged();
@@ -282,10 +341,113 @@ export default function AdminPayments() {
             <p className="mt-1 text-sm text-slate-400">Pantau invoice, pembeli, dan masa aktif langganan.</p>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => { void loadPayments(offset); void loadFeedback(); void loadAnalytics(); }} disabled={busy || feedbackBusy || analyticsBusy} className="inline-flex items-center gap-2 rounded-xl border border-slate-700 px-3 py-2.5 text-sm hover:bg-slate-900 disabled:opacity-50"><RefreshCw size={16} className={busy || feedbackBusy || analyticsBusy ? "animate-spin" : ""} /> Muat ulang</button>
+            <button onClick={() => { void loadPayments(offset); void loadFeedback(); void loadAnalytics(); void loadInsights(); }} disabled={busy || feedbackBusy || analyticsBusy || insightsBusy} className="inline-flex items-center gap-2 rounded-xl border border-slate-700 px-3 py-2.5 text-sm hover:bg-slate-900 disabled:opacity-50"><RefreshCw size={16} className={busy || feedbackBusy || analyticsBusy || insightsBusy ? "animate-spin" : ""} /> Muat ulang</button>
             <button onClick={signOut} className="inline-flex items-center gap-2 rounded-xl border border-slate-700 px-3 py-2.5 text-sm hover:bg-slate-900"><LogOut size={16} /> Keluar</button>
           </div>
         </header>
+
+        {/* ── INSIGHT SECTION ── */}
+        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-400/10 text-violet-300"><TrendingUp size={20} /></div>
+            <div>
+              <h2 className="text-lg font-semibold">Insight Bisnis</h2>
+              <p className="text-sm text-slate-400">Ringkasan revenue, konversi, dan demografi pengguna Pro.</p>
+            </div>
+          </div>
+          {insightsError && <p role="alert" className="mb-4 rounded-xl border border-rose-900 bg-rose-950/50 px-4 py-3 text-sm text-rose-300">{insightsError}</p>}
+          {insights ? (
+            <>
+              {/* KPI cards row 1 */}
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                  <div className="flex items-center gap-2 text-emerald-400 mb-1"><Wallet size={15} /><span className="text-xs font-medium uppercase tracking-wide">Total Revenue</span></div>
+                  <p className="text-2xl font-bold text-emerald-300">Rp{insights.revenue.total.toLocaleString("id-ID")}</p>
+                  <p className="mt-1 text-xs text-slate-500">{insights.transactions.paid} transaksi lunas</p>
+                </div>
+                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                  <div className="flex items-center gap-2 text-violet-400 mb-1"><Users size={15} /><span className="text-xs font-medium uppercase tracking-wide">Subscriber Aktif</span></div>
+                  <p className="text-2xl font-bold text-violet-300">{insights.subscribers.active.toLocaleString("id-ID")}</p>
+                  <p className="mt-1 text-xs text-slate-500">langganan Pro masih aktif</p>
+                </div>
+                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                  <div className="flex items-center gap-2 text-amber-400 mb-1"><TrendingUp size={15} /><span className="text-xs font-medium uppercase tracking-wide">Conversion Rate</span></div>
+                  <p className="text-2xl font-bold text-amber-300">{insights.transactions.conversionRate}%</p>
+                  <p className="mt-1 text-xs text-slate-500">{insights.transactions.pending} pending · {insights.transactions.failed} gagal</p>
+                </div>
+                <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+                  <div className="flex items-center gap-2 text-yellow-400 mb-1"><Star size={15} /><span className="text-xs font-medium uppercase tracking-wide">Rating Rata-rata</span></div>
+                  <p className="text-2xl font-bold text-yellow-300">{insights.feedback.avgRating !== null ? `${insights.feedback.avgRating}/5` : "—"}</p>
+                  <p className="mt-1 text-xs text-slate-500">{insights.feedback.reviewCount} ulasan · {insights.feedback.supportCount} dukungan</p>
+                </div>
+              </div>
+
+              {/* Revenue by month bar chart */}
+              {insights.revenue.byMonth.length > 0 && (() => {
+                const maxRev = Math.max(1, ...insights.revenue.byMonth.map((m) => m.total));
+                return (
+                  <div className="mt-5">
+                    <h3 className="text-sm font-semibold mb-3">Revenue per bulan (6 bulan terakhir)</h3>
+                    <div className="flex items-end gap-2 h-28">
+                      {insights.revenue.byMonth.map((m) => (
+                        <div key={m.label} className="flex flex-1 flex-col items-center gap-1">
+                          <span className="text-[10px] text-emerald-300 font-medium">{m.total > 0 ? `${(m.total / 1000).toFixed(0)}k` : ""}</span>
+                          <div
+                            className="w-full rounded-t-md bg-emerald-500/40 border-t-2 border-emerald-400 transition-all"
+                            style={{ height: `${Math.max(4, (m.total / maxRev) * 80)}px` }}
+                          />
+                          <span className="text-[10px] text-slate-500 text-center leading-tight">{m.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Top campus & major */}
+              {(insights.feedback.topUniversities.length > 0 || insights.feedback.topMajors.length > 0) && (
+                <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                  {insights.feedback.topUniversities.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold mb-2">Top kampus</h3>
+                      <div className="space-y-1.5">
+                        {insights.feedback.topUniversities.map((u) => {
+                          const maxCount = insights.feedback.topUniversities[0]?.count || 1;
+                          return (
+                            <div key={u.name} className="flex items-center gap-2">
+                              <div className="h-1.5 rounded-full bg-violet-500/50" style={{ width: `${Math.max(8, (u.count / maxCount) * 100)}%` }} />
+                              <span className="text-xs text-slate-300 truncate flex-1">{u.name}</span>
+                              <span className="text-xs text-slate-500 shrink-0">{u.count}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  {insights.feedback.topMajors.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold mb-2">Top jurusan</h3>
+                      <div className="space-y-1.5">
+                        {insights.feedback.topMajors.map((m) => {
+                          const maxCount = insights.feedback.topMajors[0]?.count || 1;
+                          return (
+                            <div key={m.name} className="flex items-center gap-2">
+                              <div className="h-1.5 rounded-full bg-amber-500/50" style={{ width: `${Math.max(8, (m.count / maxCount) * 100)}%` }} />
+                              <span className="text-xs text-slate-300 truncate flex-1">{m.name}</span>
+                              <span className="text-xs text-slate-500 shrink-0">{m.count}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          ) : (
+            !insightsError && <p className="text-sm text-slate-400">{insightsBusy ? "Memuat insight…" : "Data insight belum tersedia."}</p>
+          )}
+        </section>
 
         <section className="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5">
           <div className="flex items-center gap-3">
