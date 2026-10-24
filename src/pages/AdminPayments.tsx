@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { CircleDollarSign, KeyRound, LogOut, MessageSquareText, RefreshCw, Search, ShieldCheck } from "lucide-react";
+import { ADMIN_AUTH_CHANGED_EVENT } from "../context/PlanContext";
 
 type Payment = {
   invoice_number: string;
@@ -21,6 +22,10 @@ type Feedback = {
 };
 const AUTH_KEY = "kuliahbit-admin-auth";
 const PAGE_SIZE = 50;
+
+function notifyAdminAuthChanged() {
+  window.dispatchEvent(new Event(ADMIN_AUTH_CHANGED_EVENT));
+}
 
 const statusLabel: Record<Payment["status"], string> = {
   pending: "Menunggu",
@@ -58,6 +63,7 @@ export default function AdminPayments() {
         sessionStorage.removeItem(AUTH_KEY);
         setAuthenticated(false);
         setPayments([]);
+        notifyAdminAuthChanged();
         throw new Error("Token admin tidak valid atau sudah tidak aktif.");
       }
       if (!response.ok) throw new Error(data.error || "Gagal memuat pembayaran.");
@@ -83,6 +89,7 @@ export default function AdminPayments() {
         sessionStorage.removeItem(AUTH_KEY);
         setAuthenticated(false);
         setFeedback([]);
+        notifyAdminAuthChanged();
         throw new Error("Token admin tidak valid atau sudah tidak aktif.");
       }
       if (!response.ok) throw new Error(data.error || "Gagal memuat ulasan dan dukungan.");
@@ -126,6 +133,7 @@ export default function AdminPayments() {
       sessionStorage.setItem(AUTH_KEY, "yes");
       setAuthenticated(true);
       setTokenInput("");
+      notifyAdminAuthChanged();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login admin gagal.");
     } finally {
@@ -140,6 +148,7 @@ export default function AdminPayments() {
     setFeedback([]);
     setTotal(0);
     await fetch("/api/admin-logout", { method: "POST", credentials: "same-origin" });
+    notifyAdminAuthChanged();
   };
 
   if (!authenticated) {

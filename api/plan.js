@@ -1,7 +1,9 @@
-import { dbRequest, getSession, hashSession, requireMethod, send } from "./_lib/http.js";
+import { dbRequest, getSession, hashSession, isAdmin, requireMethod, send } from "./_lib/http.js";
 
 export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store, max-age=0");
   if (!requireMethod(req, res, "GET")) return;
+  if (isAdmin(req)) return send(res, 200, { plan: "pro", isAdmin: true });
   try {
     const session = getSession(req);
     if (!session) return send(res, 200, { plan: "free" });

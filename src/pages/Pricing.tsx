@@ -28,7 +28,7 @@ const PRO_FEATURES = [
 ];
 
 export default function Pricing() {
-  const { isPro, expiresAt, refreshPlan } = usePlan();
+  const { isPro, isAdmin, expiresAt, refreshPlan } = usePlan();
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -118,7 +118,7 @@ export default function Pricing() {
         </p>
         {isPro && (
           <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
-            <Crown size={14} /> Pro aktif sampai {new Date(expiresAt!).toLocaleDateString("id-ID")}
+            <Crown size={14} /> {isAdmin ? "Akses admin · Pro aktif" : `Pro aktif sampai ${new Date(expiresAt!).toLocaleDateString("id-ID")}`}
           </p>
         )}
       </div>

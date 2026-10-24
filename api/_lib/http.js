@@ -22,11 +22,20 @@ export function getCookie(req, name) {
   return match?.[1] || null;
 }
 
+export function isAdmin(req) {
+  const expected = process.env.ADMIN_DASHBOARD_TOKEN;
+  const supplied = getCookie(req, "kb_admin");
+  if (!expected || expected.length < 32 || !/^[a-fA-F0-9]+$/.test(expected) || !supplied) return false;
+  const expectedBuffer = Buffer.from(expected);
+  const suppliedBuffer = Buffer.from(supplied);
+  return expectedBuffer.length === suppliedBuffer.length && timingSafeEqual(expectedBuffer, suppliedBuffer);
+}
+
 export function hashSession(value) {
   return createHash("sha256").update(value).digest("hex");
 }
 
-import { createHash } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 
 export function dbConfig() {
   const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
